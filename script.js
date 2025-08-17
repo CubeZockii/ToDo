@@ -1,5 +1,6 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
+    const body = document.body;
     const dashboardViewBtn = document.getElementById('dashboardViewBtn');
     const kanbanViewBtn = document.getElementById('kanbanViewBtn');
     const dashboardView = document.getElementById('dashboardView');
@@ -7,15 +8,17 @@
     const pageTitle = document.getElementById('pageTitle');
     const menuToggleBtn = document.getElementById('menuToggleBtn');
     const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.overlay');
 
     const openModalBtn = document.getElementById('openModalBtn');
     const taskModal = document.getElementById('taskModal');
     const modalTitle = document.getElementById('modalTitle');
-    const closeBtn = document.querySelector('.close-btn');
+    const closeBtn = taskModal.querySelector('.close-btn');
     const saveTaskBtn = document.getElementById('saveTaskBtn');
     
     const taskNameInput = document.getElementById('taskName');
     const taskDescriptionInput = document.getElementById('taskDescription');
+    const priorityDropdownContainer = document.querySelector('.priority-dropdown-container');
     const taskPriorityDisplay = document.getElementById('priorityDropdownDisplay');
     const taskPriorityMenu = document.getElementById('priorityDropdownMenu');
     const selectedPriorityText = document.getElementById('selectedPriorityText');
@@ -40,19 +43,29 @@
         done: document.getElementById('column-done').querySelector('.task-list-kanban')
     };
 
-    const confirmModal = document.getElementById('confirmModal');
-    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-    let taskIdToDelete = null;
-
     // State
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     let currentTaskToEditId = null;
 
     // --- Sidebar Toggle for Mobile ---
-    menuToggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
+    function toggleSidebar(forceClose = false) {
+        if (forceClose || sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+            body.classList.remove('no-scroll');
+        } else {
+            sidebar.classList.add('open');
+            overlay.classList.add('active');
+            body.classList.add('no-scroll');
+        }
+    }
+    
+    menuToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSidebar();
     });
+
+    overlay.addEventListener('click', () => toggleSidebar(true));
 
     // --- View Navigation Logic ---
     function switchView(viewId, title) {
@@ -67,33 +80,13 @@
         document.getElementById(viewId + 'Btn').classList.add('active');
 
         pageTitle.textContent = title;
-        sidebar.classList.remove('open'); // Close sidebar on navigation
+        toggleSidebar(true); // Close sidebar on navigation
     }
 
     dashboardViewBtn.addEventListener('click', () => switchView('dashboardView', 'Dashboard Overview'));
     kanbanViewBtn.addEventListener('click', () => switchView('kanbanView', 'Kanban Board'));
 
     // --- Modal Logic ---
-    openModalBtn.addEventListener('click', () => {
-        modalTitle.textContent = 'Create New Task';
-        saveTaskBtn.textContent = 'Save Task';
-        currentTaskToEditId = null;
-        clearModalInputs();
-        taskModal.style.display = 'flex';
-    });
-
-    closeBtn.addEventListener('click', () => {
-        taskModal.style.display = 'none';
-        clearModalInputs();
-    });
-
-    window.addEventListener('click', (event) => {
-        if (event.target === taskModal) {
-            taskModal.style.display = 'none';
-            clearModalInputs();
-        }
-    });
-
     function clearModalInputs() {
         taskNameInput.value = '';
         taskDescriptionInput.value = '';
@@ -102,6 +95,36 @@
         taskPriorityMenu.style.display = 'none';
         taskDueDateInput.value = '';
     }
+    
+    function openModal() {
+        modalTitle.textContent = 'Create New Task';
+        saveTaskBtn.textContent = 'Save Task';
+        currentTaskToEditId = null;
+        clearModalInputs();
+        taskModal.style.display = 'flex';
+        body.classList.add('no-scroll');
+    }
+
+    function closeModal() {
+        taskModal.style.display = 'none';
+        clearModalInputs();
+        body.classList.remove('no-scroll');
+    }
+    
+    openModalBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+
+    // --- General Click Handling (for closing modal, sidebar, dropdowns) ---
+    window.addEventListener('click', (event) => {
+        // Close modal if background is clicked
+        if (event.target === taskModal) {
+            closeModal();
+        }
+        // Close priority dropdown if clicked outside
+        if (!priorityDropdownContainer.contains(event.target)) {
+            taskPriorityMenu.style.display = 'none';
+        }
+    });
     
     // Custom Dropdown Logic
     taskPriorityDisplay.addEventListener('click', (event) => {
@@ -154,8 +177,7 @@
 
         saveTasks();
         renderTasks();
-        taskModal.style.display = 'none';
-        clearModalInputs();
+        closeModal();
     });
 
     // --- Task Management & Rendering Logic ---
@@ -208,9 +230,9 @@
         const task = tasks.find(t => t.id === taskId);
 
         if (task) {
+            currentTaskToEditId = taskId;
             modalTitle.textContent = 'Edit Task';
             saveTaskBtn.textContent = 'Save Changes';
-            currentTaskToEditId = taskId;
             
             taskNameInput.value = task.name;
             taskDescriptionInput.value = task.description;
@@ -219,6 +241,7 @@
             taskDueDateInput.value = task.dueDate || '';
             
             taskModal.style.display = 'flex';
+            body.classList.add('no-scroll');
         }
     }
 
@@ -238,9 +261,8 @@
         const inProgressCount = tasks.filter(task => task.status === 'inprogress').length;
         const doneCount = tasks.filter(task => task.status === 'done').length;
         const highPriorityCount = tasks.filter(task => task.priority === 'high').length;
-        const overdueCount = tasks.filter(task => task.status !== 'done' && task.dueDate && new Date(task.dueDate) < new Date(today)).length;
+        const overdueCount = tasks.filter(task => task.status !== 'done' && task.dueDate && task.dueDate < today).length;
        
-
         totalCountElement.textContent = totalCount;
         todoCountElement.textContent = todoCount;
         inProgressCountElement.textContent = inProgressCount;
@@ -248,12 +270,10 @@
         highPriorityCountElement.textContent = highPriorityCount;
         overdueCountElement.textContent = overdueCount;
 
-        // Fix for the completion bar
         const completionRate = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
         completionBar.style.width = `${completionRate}%`;
         completionText.textContent = `${completionRate}% Completed`;
         
-        // Priority Chart
         const highPriorityPercentage = totalCount > 0 ? (highPriorityCount / totalCount) * 100 : 0;
         const mediumPriorityPercentage = totalCount > 0 ? (tasks.filter(task => task.priority === 'medium').length / totalCount) * 100 : 0;
         const lowPriorityPercentage = totalCount > 0 ? (tasks.filter(task => task.priority === 'low').length / totalCount) * 100 : 0;
@@ -274,7 +294,7 @@
         event.dataTransfer.setData('text/plain', draggedTaskKanban.dataset.id);
     }
 
-    function dragEnd(event) {
+    function dragEnd() {
         if (draggedTaskKanban) {
             draggedTaskKanban.classList.remove('dragging');
         }

@@ -41,6 +41,11 @@ body {
     line-height: 1.6;
 }
 
+/* Added utility class to prevent body scrolling */
+body.no-scroll {
+    overflow: hidden;
+}
+
 /* Main App Container */
 .app-container {
     display: flex;
@@ -179,6 +184,7 @@ body {
     font-size: 1.8rem;
     cursor: pointer;
     z-index: 1100;
+    transition: opacity 0.3s ease;
 }
 
 /* View Sections */
@@ -558,6 +564,26 @@ body {
     background-color: var(--background-color);
 }
 
+/* Added Overlay for mobile sidebar */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 999; /* Below sidebar, above content */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+
 /* Specific styles for the confirmation modal */
 #confirmModal .modal-content {
     max-width: 400px;
@@ -627,6 +653,12 @@ body {
         display: block;
     }
 
+    /* When the sidebar is open, hide the hamburger icon to prevent overlap */
+    body.no-scroll .menu-toggle {
+        opacity: 0;
+        pointer-events: none;
+    }
+
     .header {
         position: relative;
     }
@@ -670,6 +702,11 @@ body {
     .kanban-board {
         grid-template-columns: 1fr; /* Stack columns vertically */
         gap: 1.5rem;
+    }
+
+    /* Reduced min-height on mobile for a more compact view */
+    .task-list-kanban {
+        min-height: 150px;
     }
 
     .dashboard-details {
