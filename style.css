@@ -1,5 +1,4 @@
 ﻿:root {
-    /* Main Color Palette */
     --background-color: #1c2025;
     --sidebar-color: #262a2f;
     --card-bg: #2d3238;
@@ -7,27 +6,22 @@
     --text-muted: #88939c;
     --border-color: #3f4751;
 
-    /* Accent & Action Colors */
     --primary-blue: #4a90e2;
     --primary-hover: #3a7ac2;
     --accent-red: #d0021b;
     --accent-green: #7ed321;
     --accent-yellow: #f5a623;
 
-    /* Priority Colors */
     --low-priority: var(--accent-green);
     --medium-priority: var(--accent-yellow);
     --high-priority: var(--accent-red);
     
-    /* New Status Colors */
     --overdue-color: var(--accent-red);
     
-    /* Shadows */
     --shadow-main: 0 4px 12px rgba(0, 0, 0, 0.25);
     --shadow-light: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
-/* Base Styles */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -41,19 +35,16 @@ body {
     line-height: 1.6;
 }
 
-/* Added utility class to prevent body scrolling */
 body.no-scroll {
     overflow: hidden;
 }
 
-/* Main App Container */
 .app-container {
     display: flex;
     height: 100vh;
-    overflow-x: hidden; /* Prevent horizontal scroll on smaller screens */
+    overflow-x: hidden;
 }
 
-/* Sidebar */
 .sidebar {
     width: 250px;
     background-color: var(--sidebar-color);
@@ -62,7 +53,7 @@ body.no-scroll {
     flex-direction: column;
     border-right: 1px solid var(--border-color);
     box-shadow: var(--shadow-main);
-    flex-shrink: 0; /* Prevent sidebar from shrinking */
+    flex-shrink: 0;
     transition: transform 0.3s ease-in-out;
 }
 
@@ -120,7 +111,7 @@ body.no-scroll {
 }
 
 .user-info {
-    margin-top: auto; /* Pushes user info to the bottom */
+    margin-top: auto;
     padding-top: 1rem;
     border-top: 1px solid var(--border-color);
     font-size: 0.8rem;
@@ -128,13 +119,12 @@ body.no-scroll {
 }
 
 .user-id-text {
-    word-break: break-all; /* Ensures long IDs wrap */
+    word-break: break-all;
     font-family: 'Roboto', monospace;
     color: var(--text-color);
     font-size: 0.75rem;
 }
 
-/* Main Content Area */
 .main-content {
     flex-grow: 1;
     padding: 2.5rem;
@@ -175,7 +165,6 @@ body.no-scroll {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Hamburger Menu Toggle */
 .menu-toggle {
     display: none;
     background: none;
@@ -187,7 +176,6 @@ body.no-scroll {
     transition: opacity 0.3s ease;
 }
 
-/* View Sections */
 .view-section {
     display: none;
     animation: fadeIn 0.5s ease-in-out;
@@ -202,7 +190,6 @@ body.no-scroll {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Dashboard View */
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -311,7 +298,6 @@ body.no-scroll {
 .legend-color.medium { background-color: var(--medium-priority); }
 .legend-color.low { background-color: var(--low-priority); }
 
-/* Kanban Board View */
 .kanban-board {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -405,13 +391,11 @@ body.no-scroll {
     filter: invert(18%) sepia(84%) saturate(7180%) hue-rotate(356deg) brightness(85%) contrast(116%);
 }
 
-/* Priority Colors for Kanban Card Borders */
 .priority-low { border-color: var(--low-priority); }
 .priority-medium { border-color: var(--medium-priority); }
 .priority-high { border-color: var(--high-priority); }
 
 
-/* Modals (Common styles for task and confirm modals) */
 .modal {
     display: none;
     position: fixed;
@@ -501,7 +485,6 @@ body.no-scroll {
     min-height: 100px;
 }
 
-/* Custom Priority Dropdown */
 .priority-dropdown-container {
     position: relative;
 }
@@ -564,7 +547,6 @@ body.no-scroll {
     background-color: var(--background-color);
 }
 
-/* Added Overlay for mobile sidebar */
 .overlay {
     position: fixed;
     top: 0;
@@ -572,7 +554,7 @@ body.no-scroll {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
-    z-index: 999; /* Below sidebar, above content */
+    z-index: 999;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
@@ -584,7 +566,6 @@ body.no-scroll {
 }
 
 
-/* Specific styles for the confirmation modal */
 #confirmModal .modal-content {
     max-width: 400px;
     padding: 1.5rem;
@@ -625,11 +606,6 @@ body.no-scroll {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
-/* =============================================== */
-/* ===========   Responsive Design   =========== */
-/* =============================================== */
-
-/* For Tablets and smaller devices (~1024px and below) */
 @media (max-width: 1024px) {
     .sidebar {
         position: fixed;
@@ -653,7 +629,6 @@ body.no-scroll {
         display: block;
     }
 
-    /* When the sidebar is open, hide the hamburger icon to prevent overlap */
     body.no-scroll .menu-toggle {
         opacity: 0;
         pointer-events: none;
@@ -663,7 +638,6 @@ body.no-scroll {
         position: relative;
     }
     
-    /* Reorder header items for better flow */
     .header {
         display: grid;
         grid-template-columns: auto 1fr auto;
@@ -679,7 +653,6 @@ body.no-scroll {
     }
 }
 
-/* For Mobile devices (~768px and below) */
 @media (max-width: 768px) {
     .main-content {
         padding: 1.5rem;
@@ -695,22 +668,21 @@ body.no-scroll {
     }
 
     .summary-grid {
-        grid-template-columns: 1fr; /* Stack cards vertically */
+        grid-template-columns: 1fr;
         gap: 1rem;
     }
     
     .kanban-board {
-        grid-template-columns: 1fr; /* Stack columns vertically */
+        grid-template-columns: 1fr;
         gap: 1.5rem;
     }
 
-    /* Reduced min-height on mobile for a more compact view */
     .task-list-kanban {
         min-height: 150px;
     }
 
     .dashboard-details {
-        flex-direction: column; /* Stack progress and priority sections */
+        flex-direction: column;
         padding: 1.5rem;
     }
 
@@ -720,7 +692,6 @@ body.no-scroll {
     }
 }
 
-/* Further adjustments for very small screens */
 @media (max-width: 480px) {
     .header {
         margin-bottom: 1.5rem;
@@ -738,4 +709,5 @@ body.no-scroll {
     .kanban-column {
         padding: 1rem;
     }
+
 }
