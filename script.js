@@ -1,5 +1,4 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements
     const body = document.body;
     const dashboardViewBtn = document.getElementById('dashboardViewBtn');
     const kanbanViewBtn = document.getElementById('kanbanViewBtn');
@@ -43,11 +42,9 @@
         done: document.getElementById('column-done').querySelector('.task-list-kanban')
     };
 
-    // State
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     let currentTaskToEditId = null;
 
-    // --- Sidebar Toggle for Mobile ---
     function toggleSidebar(forceClose = false) {
         if (forceClose || sidebar.classList.contains('open')) {
             sidebar.classList.remove('open');
@@ -67,7 +64,6 @@
 
     overlay.addEventListener('click', () => toggleSidebar(true));
 
-    // --- View Navigation Logic ---
     function switchView(viewId, title) {
         document.querySelectorAll('.view-section').forEach(section => {
             section.classList.remove('active');
@@ -80,13 +76,12 @@
         document.getElementById(viewId + 'Btn').classList.add('active');
 
         pageTitle.textContent = title;
-        toggleSidebar(true); // Close sidebar on navigation
+        toggleSidebar(true);
     }
 
     dashboardViewBtn.addEventListener('click', () => switchView('dashboardView', 'Dashboard Overview'));
     kanbanViewBtn.addEventListener('click', () => switchView('kanbanView', 'Kanban Board'));
 
-    // --- Modal Logic ---
     function clearModalInputs() {
         taskNameInput.value = '';
         taskDescriptionInput.value = '';
@@ -114,19 +109,15 @@
     openModalBtn.addEventListener('click', openModal);
     closeBtn.addEventListener('click', closeModal);
 
-    // --- General Click Handling (for closing modal, sidebar, dropdowns) ---
     window.addEventListener('click', (event) => {
-        // Close modal if background is clicked
         if (event.target === taskModal) {
             closeModal();
         }
-        // Close priority dropdown if clicked outside
         if (!priorityDropdownContainer.contains(event.target)) {
             taskPriorityMenu.style.display = 'none';
         }
     });
     
-    // Custom Dropdown Logic
     taskPriorityDisplay.addEventListener('click', (event) => {
         event.stopPropagation();
         const isOpen = taskPriorityMenu.style.display === 'block';
@@ -153,7 +144,6 @@
         }
 
         if (currentTaskToEditId !== null) {
-            // Edit existing task
             const taskIndex = tasks.findIndex(task => task.id === currentTaskToEditId);
             if (taskIndex > -1) {
                 tasks[taskIndex].name = name;
@@ -162,7 +152,6 @@
                 tasks[taskIndex].dueDate = dueDate;
             }
         } else {
-            // Create new task
             const newTask = {
                 id: Date.now(),
                 name,
@@ -180,13 +169,11 @@
         closeModal();
     });
 
-    // --- Task Management & Rendering Logic ---
     function saveTasks() {
         localStorage.setItem('tasks', JSON.stringify(tasks));
     }
 
     function renderTasks() {
-        // Clear Kanban columns before re-rendering
         kanbanColumns.todo.innerHTML = '';
         kanbanColumns.inprogress.innerHTML = '';
         kanbanColumns.done.innerHTML = '';
@@ -283,7 +270,6 @@
         lowPriorityBar.style.width = `${lowPriorityPercentage}%`;
     }
 
-    // --- Kanban Drag and Drop Logic ---
     let draggedTaskKanban = null;
 
     function dragStart(event) {
@@ -322,6 +308,6 @@
         }
     };
     
-    // Initial render when the page loads
     renderTasks();
+
 });
