@@ -1,0 +1,586 @@
+﻿:root {
+    /* Main Color Palette */
+    --background-color: #1c2025;
+    --sidebar-color: #262a2f;
+    --card-bg: #2d3238;
+    --text-color: #e5e8ec;
+    --text-muted: #88939c;
+    --border-color: #3f4751;
+
+    /* Accent & Action Colors */
+    --primary-blue: #4a90e2;
+    --primary-hover: #3a7ac2;
+    --accent-red: #d0021b;
+    --accent-green: #7ed321;
+    --accent-yellow: #f5a623;
+
+    /* Priority Colors */
+    --low-priority: var(--accent-green);
+    --medium-priority: var(--accent-yellow);
+    --high-priority: var(--accent-red);
+    
+    /* New Status Colors */
+    --overdue-color: var(--accent-red);
+    
+    /* Shadows */
+    --shadow-main: 0 4px 12px rgba(0, 0, 0, 0.25);
+    --shadow-light: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+/* Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* Main App Container */
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: var(--sidebar-color);
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-color);
+    box-shadow: var(--shadow-main);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-left: 0.5rem;
+}
+
+.logo-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+    color: var(--primary-blue);
+}
+
+.logo-text {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.nav-item:hover {
+    background-color: rgba(74, 144, 226, 0.1);
+    color: var(--primary-blue);
+}
+
+.nav-item.active {
+    background-color: rgba(74, 144, 226, 0.2);
+    color: var(--primary-blue);
+    position: relative;
+}
+
+.nav-icon {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+}
+
+.user-info {
+    margin-top: auto; /* Pushes user info to the bottom */
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.user-id-text {
+    word-break: break-all; /* Ensures long IDs wrap */
+    font-family: 'Roboto', monospace;
+    color: var(--text-color);
+    font-size: 0.75rem;
+}
+
+/* Main Content Area */
+.main-content {
+    flex-grow: 1;
+    padding: 2.5rem;
+    overflow-y: auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.primary-btn {
+    background-color: var(--primary-blue);
+    color: #fff;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-light);
+}
+
+.primary-btn:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* View Sections */
+.view-section {
+    display: none;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.view-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dashboard View */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-main);
+    text-align: center;
+}
+
+.summary-card h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.summary-card .count {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.summary-card.high-priority h3 { color: var(--high-priority); }
+.summary-card.high-priority .count { color: var(--high-priority); }
+.summary-card.overdue h3 { color: var(--overdue-color); }
+.summary-card.overdue .count { color: var(--overdue-color); }
+
+.dashboard-details {
+    background-color: var(--card-bg);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-main);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.progress-section, .priority-chart-section {
+    flex: 1;
+    min-width: 300px;
+}
+
+.progress-section h4, .priority-chart-section h4 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.progress-bar-container {
+    height: 8px;
+    background-color: var(--sidebar-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--primary-blue);
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    margin-top: 0.5rem;
+    font-family: 'Poppins', sans-serif;
+    color: var(--primary-blue);
+    text-align: right;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.priority-chart-container {
+    height: 8px;
+    display: flex;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: var(--sidebar-color);
+}
+
+.priority-bar { height: 100%; transition: width 0.6s ease; }
+.priority-bar.high { background-color: var(--high-priority); }
+.priority-bar.medium { background-color: var(--medium-priority); }
+.priority-bar.low { background-color: var(--low-priority); }
+
+.chart-legend {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: space-around;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+.legend-item { display: flex; align-items: center; gap: 0.5rem; }
+.legend-color { width: 15px; height: 15px; border-radius: 50%; }
+.legend-color.high { background-color: var(--high-priority); }
+.legend-color.medium { background-color: var(--medium-priority); }
+.legend-color.low { background-color: var(--low-priority); }
+
+/* Kanban Board View */
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.kanban-column {
+    background-color: var(--sidebar-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-light);
+}
+
+.kanban-column h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    color: var(--text-color);
+    text-align: center;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.task-list-kanban {
+    min-height: 300px;
+}
+
+.kanban-card {
+    background-color: var(--card-bg);
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 4px solid;
+    margin-bottom: 0.75rem;
+    cursor: grab;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-light);
+    position: relative;
+}
+
+.kanban-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-main);
+}
+
+.kanban-card.dragging {
+    opacity: 0.7;
+    transform: scale(0.95);
+}
+
+.kanban-card h4 {
+    font-size: 1rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.kanban-card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.kanban-card .card-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+}
+
+.kanban-card .card-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s ease;
+    width: 20px;
+    height: 20px;
+}
+
+.kanban-card .card-action-btn img {
+    width: 100%;
+    height: 100%;
+    filter: invert(50%) sepia(20%) saturate(600%) hue-rotate(180deg);
+    transition: filter 0.2s ease;
+}
+
+.kanban-card .card-action-btn.edit-btn:hover img {
+    filter: invert(47%) sepia(87%) saturate(1914%) hue-rotate(190deg) brightness(97%) contrast(92%);
+}
+
+.kanban-card .card-action-btn.delete-btn:hover img {
+    filter: invert(18%) sepia(84%) saturate(7180%) hue-rotate(356deg) brightness(85%) contrast(116%);
+}
+
+/* Priority Colors for Kanban Card Borders */
+.priority-low { border-color: var(--low-priority); }
+.priority-medium { border-color: var(--medium-priority); }
+.priority-high { border-color: var(--high-priority); }
+
+
+/* Modals (Common styles for task and confirm modals) */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: var(--shadow-main);
+    position: relative;
+    animation: fadeInModal 0.3s ease;
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.close-btn {
+    color: var(--text-muted);
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+    color: var(--accent-red);
+}
+
+.modal-content h2 {
+    font-family: 'Poppins', sans-serif;
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 5px rgba(74, 144, 226, 0.2);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Custom Priority Dropdown */
+.priority-dropdown-container {
+    position: relative;
+}
+
+.priority-dropdown-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.priority-dropdown-display:hover {
+    border-color: var(--primary-blue);
+}
+
+.priority-dropdown-display .dropdown-arrow {
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
+}
+
+.priority-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: var(--sidebar-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: var(--shadow-main);
+    z-index: 10;
+    display: none;
+    margin-top: 5px;
+}
+
+.priority-dropdown-container.open .priority-dropdown-menu {
+    display: block;
+}
+
+.priority-option {
+    width: 100%;
+    background-color: transparent;
+    border: none;
+    padding: 0.75rem;
+    text-align: left;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.priority-option:hover {
+    background-color: var(--background-color);
+}
+
+/* Specific styles for the confirmation modal */
+#confirmModal .modal-content {
+    max-width: 400px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+#confirmModal h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+#confirmModal p {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.secondary-btn {
+    background-color: var(--text-muted);
+    color: var(--background-color);
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-light);
+}
+
+.secondary-btn:hover {
+    background-color: #718096;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}

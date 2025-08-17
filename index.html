@@ -1,0 +1,142 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Task Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="icon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">&#9733;</span>
+                <span class="logo-text">Taskflow</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" id="dashboardViewBtn" class="nav-item active">
+                    <span class="nav-icon">&#8962;</span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="#" id="kanbanViewBtn" class="nav-item">
+                    <span class="nav-icon">&#9776;</span>
+                    <span class="nav-text">Board</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <h1 id="pageTitle">Dashboard Overview</h1>
+                <button id="openModalBtn" class="primary-btn">Create Task</button>
+            </header>
+
+            <section id="dashboardView" class="view-section active">
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <h3>Total Tasks</h3>
+                        <p class="count" id="totalCount">0</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>To Do</h3>
+                        <p class="count" id="todoCount">0</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>In Progress</h3>
+                        <p class="count" id="inProgressCount">0</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Completed</h3>
+                        <p class="count" id="doneCount">0</p>
+                    </div>
+                    <div class="summary-card high-priority">
+                        <h3>High Priority</h3>
+                        <p class="count" id="highPriorityCount">0</p>
+                    </div>
+                    <div class="summary-card overdue">
+                        <h3>Overdue</h3>
+                        <p class="count" id="overdueCount">0</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-details">
+                    <div class="progress-section">
+                        <h4>Completion Rate</h4>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="completionBar"></div>
+                        </div>
+                        <p class="progress-text" id="completionText">0% Completed</p>
+                    </div>
+                    
+                    <div class="priority-chart-section">
+                        <h4>Tasks by Priority</h4>
+                        <div class="priority-chart-container">
+                            <div class="priority-bar high" id="highPriorityBar"></div>
+                            <div class="priority-bar medium" id="mediumPriorityBar"></div>
+                            <div class="priority-bar low" id="lowPriorityBar"></div>
+                        </div>
+                        <div class="chart-legend">
+                            <span class="legend-item"><span class="legend-color high"></span>High</span>
+                            <span class="legend-item"><span class="legend-color medium"></span>Medium</span>
+                            <span class="legend-item"><span class="legend-color low"></span>Low</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="kanbanView" class="view-section">
+                <div class="kanban-board">
+                    <div class="kanban-column" id="column-todo">
+                        <h3>To Do</h3>
+                        <div class="task-list-kanban" ondragover="dragOver(event)" ondrop="drop(event, 'todo')"></div>
+                    </div>
+                    <div class="kanban-column" id="column-inprogress">
+                        <h3>In Progress</h3>
+                        <div class="task-list-kanban" ondragover="dragOver(event)" ondrop="drop(event, 'inprogress')"></div>
+                    </div>
+                    <div class="kanban-column" id="column-done">
+                        <h3>Done</h3>
+                        <div class="task-list-kanban" ondragover="dragOver(event)" ondrop="drop(event, 'done')"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&#x2715;</span>
+            <h2 id="modalTitle">Create New Task</h2>
+            <div class="form-group">
+                <label for="taskName">Task Name</label>
+                <input type="text" id="taskName" placeholder="e.g., Optimize API endpoints">
+            </div>
+            <div class="form-group">
+                <label for="taskDescription">Description</label>
+                <textarea id="taskDescription" placeholder="Provide a detailed description of the task..."></textarea>
+            </div>
+            <div class="form-group priority-dropdown-container">
+                <label for="taskPriority">Priority</label>
+                <div class="priority-dropdown-display" id="priorityDropdownDisplay">
+                    <span id="selectedPriorityText">Low</span>
+                    <span class="dropdown-arrow">&#9660;</span>
+                </div>
+                <div class="priority-dropdown-menu" id="priorityDropdownMenu">
+                    <button class="priority-option" data-value="low">Low</button>
+                    <button class="priority-option" data-value="medium">Medium</button>
+                    <button class="priority-option" data-value="high">High</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="taskDueDate">Due Date</label>
+                <input type="date" id="taskDueDate">
+            </div>
+            <button id="saveTaskBtn" class="primary-btn">Save Task</button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
