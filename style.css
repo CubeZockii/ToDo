@@ -45,6 +45,7 @@ body {
 .app-container {
     display: flex;
     height: 100vh;
+    overflow-x: hidden; /* Prevent horizontal scroll on smaller screens */
 }
 
 /* Sidebar */
@@ -56,6 +57,8 @@ body {
     flex-direction: column;
     border-right: 1px solid var(--border-color);
     box-shadow: var(--shadow-main);
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
+    transition: transform 0.3s ease-in-out;
 }
 
 .logo {
@@ -165,6 +168,17 @@ body {
     background-color: var(--primary-hover);
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Hamburger Menu Toggle */
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.8rem;
+    cursor: pointer;
+    z-index: 1100;
 }
 
 /* View Sections */
@@ -477,7 +491,7 @@ body {
 }
 
 .form-group textarea {
-    resize: vertical;
+    resize: none;
     min-height: 100px;
 }
 
@@ -583,4 +597,108 @@ body {
     background-color: #718096;
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* =============================================== */
+/* ===========   Responsive Design   =========== */
+/* =============================================== */
+
+/* For Tablets and smaller devices (~1024px and below) */
+@media (max-width: 1024px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100%;
+        transform: translateX(-100%);
+        z-index: 1000;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        padding: 2rem;
+        width: 100%;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .header {
+        position: relative;
+    }
+    
+    /* Reorder header items for better flow */
+    .header {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+    }
+
+    .header h1 {
+        text-align: center;
+    }
+    
+    .header .primary-btn {
+        justify-self: end;
+    }
+}
+
+/* For Mobile devices (~768px and below) */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1.5rem;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    .primary-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr; /* Stack cards vertically */
+        gap: 1rem;
+    }
+    
+    .kanban-board {
+        grid-template-columns: 1fr; /* Stack columns vertically */
+        gap: 1.5rem;
+    }
+
+    .dashboard-details {
+        flex-direction: column; /* Stack progress and priority sections */
+        padding: 1.5rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 1.5rem;
+    }
+}
+
+/* Further adjustments for very small screens */
+@media (max-width: 480px) {
+    .header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+    }
+    
+    .header h1 {
+        font-size: 1.2rem;
+    }
+
+    .summary-card .count {
+        font-size: 2rem;
+    }
+
+    .kanban-column {
+        padding: 1rem;
+    }
 }

@@ -5,6 +5,8 @@
     const dashboardView = document.getElementById('dashboardView');
     const kanbanView = document.getElementById('kanbanView');
     const pageTitle = document.getElementById('pageTitle');
+    const menuToggleBtn = document.getElementById('menuToggleBtn');
+    const sidebar = document.querySelector('.sidebar');
 
     const openModalBtn = document.getElementById('openModalBtn');
     const taskModal = document.getElementById('taskModal');
@@ -47,6 +49,11 @@
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     let currentTaskToEditId = null;
 
+    // --- Sidebar Toggle for Mobile ---
+    menuToggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+    });
+
     // --- View Navigation Logic ---
     function switchView(viewId, title) {
         document.querySelectorAll('.view-section').forEach(section => {
@@ -60,6 +67,7 @@
         document.getElementById(viewId + 'Btn').classList.add('active');
 
         pageTitle.textContent = title;
+        sidebar.classList.remove('open'); // Close sidebar on navigation
     }
 
     dashboardViewBtn.addEventListener('click', () => switchView('dashboardView', 'Dashboard Overview'));
