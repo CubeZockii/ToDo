@@ -1,15 +1,15 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
-import { 
-    getFirestore, 
-    collection, 
-    doc, 
-    addDoc, 
-    updateDoc, 
-    deleteDoc, 
-    getDoc, 
-    onSnapshot, 
-    serverTimestamp, 
+import {
+    getFirestore,
+    collection,
+    doc,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    getDoc,
+    onSnapshot,
+    serverTimestamp,
     deleteField,
     query,
     where,
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type === 'confirm') {
             customModalConfirmBtn.style.display = 'inline-block';
             customModalCancelBtn.style.display = 'inline-block';
-            
+
             customModalConfirmBtn.onclick = () => {
                 customModal.style.display = 'none';
                 body.classList.remove('no-scroll');
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const boardDocRef = doc(db, 'boards', targetBoardId);
                 const boardDoc = await getDoc(boardDocRef);
-                
+
                 if (boardDoc.exists()) {
                     const boardData = boardDoc.data();
                     // Überprüfen, ob der Benutzer der Besitzer ist oder ob es über die URL geteilt wurde
@@ -303,13 +303,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newBoardRef = doc(collection(db, 'boards'));
                 boardId = newBoardRef.id;
                 await setDoc(newBoardRef, { // setDoc verwenden, um Initialisierung zu gewährleisten
-                    createdAt: serverTimestamp(), 
-                    owner: userId 
-                }); 
+                    createdAt: serverTimestamp(),
+                    owner: userId
+                });
                 console.log("New board created with ID:", boardId);
                 showCustomModal(`Neues Board erstellt! ID: ${boardId}`, "Board erstellt", 'alert');
             }
-            
+
             localStorage.setItem('myOwnedBoardId', boardId); // Eigenes Board im LocalStorage speichern
             isOwnerBoard = true; // Setzen, da dies das eigene Board ist
 
@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
             boardModal.style.display = 'none';
             updateUIForBoardState(true);
             listenForTasks();
-            
+
         } catch (error) {
             console.error("Error creating board:", error);
             showCustomModal("Board konnte nicht erstellt werden. Bitte versuchen Sie es erneut.", "Fehler", 'alert');
@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateUIForBoardState(true);
                 listenForTasks();
                 showCustomModal(`Board ${boardId} erfolgreich beigetreten!`, "Joined the board", 'alert');
-                
+
                 // Wenn man einem fremden Board beitritt, soll das eigene nicht mehr automatisch geladen werden
                 if (!isOwnerBoard) {
                     localStorage.removeItem('myOwnedBoardId');
