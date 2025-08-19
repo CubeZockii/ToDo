@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskFlow - Collaborative Kanban</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="icon.png" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Poppins:wght@400;500;600&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <div class="app-container">
         <aside class="sidebar">
@@ -30,7 +34,10 @@
                 <p class="user-id-text" id="userIdText">Loading...</p>
                 <p>Current Board ID:</p>
                 <p class="user-id-text" id="boardIdText">N/A</p>
-                <button id="shareBoardBtn" class="secondary-btn">Share Board</button>
+                <div class="user-info-actions">
+                    <button id="shareBoardBtn" class="secondary-btn">Share Board</button>
+                    <button id="openBoardSelectionBtn" class="secondary-btn">Select Board</button>
+                </div>
             </div>
         </aside>
 
@@ -77,7 +84,7 @@
                         </div>
                         <p class="progress-text" id="completionText">0% Completed</p>
                     </div>
-                    
+
                     <div class="priority-chart-section">
                         <h4>Tasks by Priority</h4>
                         <div class="priority-chart-container">
@@ -102,7 +109,8 @@
                     </div>
                     <div class="kanban-column" id="column-inprogress">
                         <h3>In Progress</h3>
-                        <div class="task-list-kanban" ondragover="dragOver(event)" ondrop="drop(event, 'inprogress')"></div>
+                        <div class="task-list-kanban" ondragover="dragOver(event)" ondrop="drop(event, 'inprogress')">
+                        </div>
                     </div>
                     <div class="kanban-column" id="column-done">
                         <h3>Done</h3>
@@ -126,7 +134,8 @@
             </div>
             <div class="form-group">
                 <label for="taskDescription">Description</label>
-                <textarea rows="7" id="taskDescription" placeholder="Provide a detailed description of the task..."></textarea>
+                <textarea rows="7" id="taskDescription"
+                    placeholder="Provide a detailed description of the task..."></textarea>
             </div>
             <div class="form-group priority-dropdown-container">
                 <label for="taskPriority">Priority</label>
@@ -164,7 +173,7 @@
             <button id="joinBoardBtn" class="secondary-btn">Join Board</button>
         </div>
     </div>
-    
+
     <!-- Share Modal -->
     <div id="shareModal" class="modal">
         <div class="modal-content">
@@ -186,4 +195,5 @@
     <!-- WICHTIG: 'type="module"' hinzufügen! -->
     <script type="module" src="script.js"></script>
 </body>
+
 </html>
