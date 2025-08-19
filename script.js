@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
             signInAnonymously(auth).then(() => {
                 console.log("Anonymous sign-in successful (first time). onAuthStateChanged should trigger again soon."); // Debugging
             }).catch(error => {
-                console.error("Fehler bei der anonymen Anmeldung:", error);
+                console.error("Error during anonymous login:", error);
                 showCustomModal("There was an error during login. Please try again later.", "Login Error", 'alert');
             });
         }
@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const existingBoardDoc = myBoardsSnapshot.docs[0];
                 boardId = existingBoardDoc.id;
                 console.log("User already has a board. Reusing existing board ID:", boardId);
-                showCustomModal("Sie haben bereits ein Board. Sie werden zu diesem Board weitergeleitet.", "Board bereits vorhanden", 'alert');
+                showCustomModal("You already have a board. You will be redirected to this board.", "Board already available", 'alert');
             } else {
                 // Neues Board erstellen, da keins gefunden wurde
                 const newBoardRef = doc(collection(db, 'boards'));
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     owner: userId
                 });
                 console.log("New board created with ID:", boardId);
-                showCustomModal(`Neues Board erstellt! ID: ${boardId}`, "Board erstellt", 'alert');
+                showCustomModal(`New board created! ID: ${boardId}`, "Board created", 'alert');
             }
 
             localStorage.setItem('myOwnedBoardId', boardId); // Eigenes Board im LocalStorage speichern
@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Error creating board:", error);
-            showCustomModal("Board konnte nicht erstellt werden. Bitte versuchen Sie es erneut.", "Fehler", 'alert');
+            showCustomModal("Board could not be created. Please try again.", "Error", 'alert');
         }
     });
 
@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 boardModal.style.display = 'none';
                 updateUIForBoardState(true);
                 listenForTasks();
-                showCustomModal(`Board ${boardId} erfolgreich beigetreten!`, "Joined the board", 'alert');
+                showCustomModal(`Board ${boardId} successfully joined!`, "Joined the board", 'alert');
 
                 // Wenn man einem fremden Board beitritt, soll das eigene nicht mehr automatisch geladen werden
                 if (!isOwnerBoard) {
