@@ -10,7 +10,11 @@ import {
     getDoc, 
     onSnapshot, 
     serverTimestamp, 
-    deleteField 
+    deleteField,
+    query,
+    where,
+    getDocs,
+    setDoc
 } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -50,8 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Modale
     const openModalBtn = document.getElementById('openModalBtn');
-    // Schaltfläche initial deaktivieren
-    openModalBtn.disabled = true;
+    openModalBtn.disabled = true; // Schaltfläche initial deaktivieren
     const taskModal = document.getElementById('taskModal');
     const boardModal = document.getElementById('boardModal');
     const shareModal = document.getElementById('shareModal');
@@ -97,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyLinkBtn = document.getElementById('copyLinkBtn');
     const shareableLinkInput = document.getElementById('shareableLink');
     const shareableBoardIdInput = document.getElementById('shareableBoardId');
+    const openBoardSelectionBtn = document.getElementById('openBoardSelectionBtn'); // Neuer Button
 
     // Benutzerinfo-Anzeige
     const userIdText = document.getElementById('userIdText');
@@ -108,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let userId = null;
     let boardId = null;
     let unsubscribe = null; // Zum Trennen des Firestore-Listeners
+    let isOwnerBoard = false; // Flag, um zu verfolgen, ob der Benutzer der Board-Besitzer ist
 
     // --- Benutzerdefiniertes Modal für Benachrichtigungen und Bestätigungen ---
     const customModalHtml = `
@@ -205,23 +210,71 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- App-Initialisierung ---
-    function initApp() {
+    async function initApp() {
         console.log("initApp called. User ID:", userId); // Debugging
         const urlParams = new URLSearchParams(window.location.search);
         const urlBoardId = urlParams.get('board');
+        const storedBoardId = localStorage.getItem('myOwnedBoardId'); // Letztes eigenes Board
+
+        let targetBoardId = null;
+        let isFromURL = false;
 
         if (urlBoardId) {
-            boardId = urlBoardId;
-            boardIdText.textContent = boardId;
-            console.log("Board ID from URL:", boardId); // Debugging
-            updateUIForBoardState(true);
-            listenForTasks();
+            targetBoardId = urlBoardId;
+            isFromURL = true;
+            console.log("Board ID from URL:", targetBoardId);
+        } else if (storedBoardId) {
+            targetBoardId = storedBoardId;
+            console.log("Board ID from LocalStorage:", targetBoardId);
+        }
+
+        if (targetBoardId) {
+            try {
+                const boardDocRef = doc(db, 'boards', targetBoardId);
+                const boardDoc = await getDoc(boardDocRef);
+                
+                if (boardDoc.exists()) {
+                    const boardData = boardDoc.data();
+                    // Überprüfen, ob der Benutzer der Besitzer ist oder ob es über die URL geteilt wurde
+                    if (boardData.owner === userId || isFromURL) {
+                        boardId = targetBoardId;
+                        boardIdText.textContent = boardId;
+                        isOwnerBoard = (boardData.owner === userId); // Status setzen
+                        updateUIForBoardState(true);
+                        listenForTasks();
+                        console.log("Successfully loaded board:", boardId, "Is owner:", isOwnerBoard);
+                        // Wenn es das eigene Board ist und nicht über die URL kam, speichern wir es im LocalStorage
+                        if (isOwnerBoard && !isFromURL) {
+                            localStorage.setItem('myOwnedBoardId', boardId);
+                        } else if (!isOwnerBoard && isFromURL) {
+                            // Wenn es ein fremdes Board ist und über URL kam, NICHT im LocalStorage speichern
+                            // und stellen Sie sicher, dass es beim nächsten Laden nicht automatisch geladen wird.
+                            localStorage.removeItem('myOwnedBoardId');
+                        }
+                    } else {
+                        // Board existiert, aber gehört nicht diesem Benutzer und kam nicht über URL
+                        console.warn("Board exists but not owned by user and not from URL. Showing board creation modal.");
+                        localStorage.removeItem('myOwnedBoardId'); // Altes, fremdes Board vergessen
+                        window.history.pushState({}, '', window.location.pathname); // URL bereinigen
+                        updateUIForBoardState(false);
+                    }
+                } else {
+                    // Board existiert nicht (z.B. gelöscht)
+                    console.warn("Board from URL/LocalStorage does not exist. Showing board creation modal.");
+                    localStorage.removeItem('myOwnedBoardId'); // Ungültiges Board vergessen
+                    window.history.pushState({}, '', window.location.pathname); // URL bereinigen
+                    updateUIForBoardState(false);
+                }
+            } catch (error) {
+                console.error("Error checking board existence:", error);
+                showCustomModal("Error loading board. Please check your connection.", "Error", 'alert');
+                localStorage.removeItem('myOwnedBoardId'); // Im Fehlerfall auch vergessen
+                window.history.pushState({}, '', window.location.pathname); // URL bereinigen
+                updateUIForBoardState(false);
+            }
         } else {
-            boardId = null; // Ensure boardId is null if not in URL
-            boardIdText.textContent = 'N/A';
-            console.log("No Board ID in URL. Showing board creation modal."); // Debugging
+            console.log("No Board ID in URL or LocalStorage. Showing board creation modal."); // Debugging
             updateUIForBoardState(false);
-            // boardModal.style.display is already handled by updateUIForBoardState(false)
         }
     }
 
@@ -235,23 +288,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         try {
             console.log("Attempting to create new board document in Firestore...");
-            const newBoardRef = doc(collection(db, 'boards'));
-            boardId = newBoardRef.id;
-            await updateDoc(newBoardRef, { 
-                createdAt: serverTimestamp(), 
-                owner: userId 
-            }, { merge: true }); // Use updateDoc for setting fields after doc()
-            console.log("Board created with ID:", boardId);
+            // Zuerst prüfen, ob der Benutzer bereits ein eigenes Board hat, um Duplikate zu vermeiden
+            const myBoardsQuery = query(collection(db, 'boards'), where('owner', '==', userId));
+            const myBoardsSnapshot = await getDocs(myBoardsQuery);
+
+            if (!myBoardsSnapshot.empty) {
+                // Benutzer hat bereits ein eigenes Board, dieses verwenden
+                const existingBoardDoc = myBoardsSnapshot.docs[0];
+                boardId = existingBoardDoc.id;
+                console.log("User already has a board. Reusing existing board ID:", boardId);
+                showCustomModal("Sie haben bereits ein Board. Sie werden zu diesem Board weitergeleitet.", "Board bereits vorhanden", 'alert');
+            } else {
+                // Neues Board erstellen, da keins gefunden wurde
+                const newBoardRef = doc(collection(db, 'boards'));
+                boardId = newBoardRef.id;
+                await setDoc(newBoardRef, { // setDoc verwenden, um Initialisierung zu gewährleisten
+                    createdAt: serverTimestamp(), 
+                    owner: userId 
+                }); 
+                console.log("New board created with ID:", boardId);
+                showCustomModal(`Neues Board erstellt! ID: ${boardId}`, "Board erstellt", 'alert');
+            }
+            
+            localStorage.setItem('myOwnedBoardId', boardId); // Eigenes Board im LocalStorage speichern
+            isOwnerBoard = true; // Setzen, da dies das eigene Board ist
 
             window.history.pushState({}, '', `?board=${boardId}`);
             boardIdText.textContent = boardId;
             boardModal.style.display = 'none';
             updateUIForBoardState(true);
             listenForTasks();
-            showCustomModal(`New board created! ID: ${boardId}`, "Board created", 'alert');
+            
         } catch (error) {
             console.error("Error creating board:", error);
-            showCustomModal("Board could not be created. Please try again.", "Error", 'alert');
+            showCustomModal("Board konnte nicht erstellt werden. Bitte versuchen Sie es erneut.", "Fehler", 'alert');
         }
     });
 
@@ -270,15 +340,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             console.log("Attempting to check if board exists:", inputBoardId);
-            const boardDoc = await getDoc(doc(db, 'boards', inputBoardId));
+            const boardDocRef = doc(db, 'boards', inputBoardId);
+            const boardDoc = await getDoc(boardDocRef);
             if (boardDoc.exists()) {
+                const boardData = boardDoc.data();
                 boardId = inputBoardId;
+                // Überprüfen, ob das Board dem aktuellen Benutzer gehört, um isOwnerBoard zu setzen
+                isOwnerBoard = (boardData.owner === userId);
+
                 window.history.pushState({}, '', `?board=${boardId}`);
                 boardIdText.textContent = boardId;
                 boardModal.style.display = 'none';
                 updateUIForBoardState(true);
                 listenForTasks();
-                showCustomModal(`Board ${boardId} successfully joined!`, "Joined the board", 'alert');
+                showCustomModal(`Board ${boardId} erfolgreich beigetreten!`, "Joined the board", 'alert');
+                
+                // Wenn man einem fremden Board beitritt, soll das eigene nicht mehr automatisch geladen werden
+                if (!isOwnerBoard) {
+                    localStorage.removeItem('myOwnedBoardId');
+                } else {
+                    // Wenn man das eigene Board über die Join-Funktion betritt, speichern
+                    localStorage.setItem('myOwnedBoardId', boardId);
+                }
+
             } else {
                 console.warn("Board does not exist:", inputBoardId);
                 showCustomModal("Board not found. Please check the ID.", "Board not found", 'alert');
@@ -287,6 +371,17 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Error joining the board:", error);
             showCustomModal("Unable to join board. Please try again.", "Error", 'alert');
         }
+    });
+
+    // --- Zusätzlicher Button zum Board-Auswahl-Modal ---
+    openBoardSelectionBtn.addEventListener('click', () => {
+        console.log("Open Board Selection button clicked.");
+        // Stellen Sie sicher, dass das Board-Modal angezeigt wird
+        boardModal.style.display = 'flex';
+        body.classList.add('no-scroll');
+        // Setzen Sie den Titel zurück für den Fall, dass er durch eine Fehlermeldung geändert wurde
+        document.getElementById('boardModalTitle').textContent = 'Collaborate on a Board';
+        joinBoardIdInput.value = ''; // Eingabefeld leeren
     });
 
     // --- Echtzeit-Datensynchronisation mit Firestore ---
@@ -628,7 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
     copyLinkBtn.addEventListener('click', () => {
         shareableLinkInput.select();
         document.execCommand('copy');
-        copyLinkBtn.textContent = 'Kopiert!';
+        copyLinkBtn.textContent = 'Copied!';
         console.log("Share link copied to clipboard.");
         setTimeout(() => { copyLinkBtn.textContent = 'Copy Link'; }, 2000);
     });
