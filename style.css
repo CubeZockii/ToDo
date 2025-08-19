@@ -15,9 +15,9 @@
     --low-priority: var(--accent-green);
     --medium-priority: var(--accent-yellow);
     --high-priority: var(--accent-red);
-    
+
     --overdue-color: var(--accent-red);
-    
+
     --shadow-main: 0 4px 12px rgba(0, 0, 0, 0.25);
     --shadow-light: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
@@ -118,6 +118,10 @@ body.no-scroll {
     color: var(--text-muted);
 }
 
+.user-info #openBoardSelectionBtn {
+    margin-top: 10px;
+}
+
 .user-id-text {
     word-break: break-all;
     font-family: 'Roboto Mono', monospace;
@@ -203,8 +207,15 @@ body.no-scroll {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .summary-grid {
@@ -238,10 +249,21 @@ body.no-scroll {
     color: var(--text-color);
 }
 
-.summary-card.high-priority h3 { color: var(--high-priority); }
-.summary-card.high-priority .count { color: var(--high-priority); }
-.summary-card.overdue h3 { color: var(--overdue-color); }
-.summary-card.overdue .count { color: var(--overdue-color); }
+.summary-card.high-priority h3 {
+    color: var(--high-priority);
+}
+
+.summary-card.high-priority .count {
+    color: var(--high-priority);
+}
+
+.summary-card.overdue h3 {
+    color: var(--overdue-color);
+}
+
+.summary-card.overdue .count {
+    color: var(--overdue-color);
+}
 
 .dashboard-details {
     background-color: var(--card-bg);
@@ -254,12 +276,14 @@ body.no-scroll {
     gap: 2rem;
 }
 
-.progress-section, .priority-chart-section {
+.progress-section,
+.priority-chart-section {
     flex: 1;
     min-width: 300px;
 }
 
-.progress-section h4, .priority-chart-section h4 {
+.progress-section h4,
+.priority-chart-section h4 {
     font-family: 'Poppins', sans-serif;
     font-size: 1.2rem;
     color: var(--text-color);
@@ -297,10 +321,22 @@ body.no-scroll {
     background-color: var(--sidebar-color);
 }
 
-.priority-bar { height: 100%; transition: width 0.6s ease; }
-.priority-bar.high { background-color: var(--high-priority); }
-.priority-bar.medium { background-color: var(--medium-priority); }
-.priority-bar.low { background-color: var(--low-priority); }
+.priority-bar {
+    height: 100%;
+    transition: width 0.6s ease;
+}
+
+.priority-bar.high {
+    background-color: var(--high-priority);
+}
+
+.priority-bar.medium {
+    background-color: var(--medium-priority);
+}
+
+.priority-bar.low {
+    background-color: var(--low-priority);
+}
 
 .chart-legend {
     margin-top: 1rem;
@@ -309,11 +345,30 @@ body.no-scroll {
     font-size: 0.9rem;
     color: var(--text-muted);
 }
-.legend-item { display: flex; align-items: center; gap: 0.5rem; }
-.legend-color { width: 15px; height: 15px; border-radius: 50%; }
-.legend-color.high { background-color: var(--high-priority); }
-.legend-color.medium { background-color: var(--medium-priority); }
-.legend-color.low { background-color: var(--low-priority); }
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-color {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+}
+
+.legend-color.high {
+    background-color: var(--high-priority);
+}
+
+.legend-color.medium {
+    background-color: var(--medium-priority);
+}
+
+.legend-color.low {
+    background-color: var(--low-priority);
+}
 
 .kanban-board {
     display: grid;
@@ -408,9 +463,17 @@ body.no-scroll {
     filter: invert(18%) sepia(84%) saturate(7180%) hue-rotate(356deg) brightness(85%) contrast(116%);
 }
 
-.priority-low { border-color: var(--low-priority); }
-.priority-medium { border-color: var(--medium-priority); }
-.priority-high { border-color: var(--high-priority); }
+.priority-low {
+    border-color: var(--low-priority);
+}
+
+.priority-medium {
+    border-color: var(--medium-priority);
+}
+
+.priority-high {
+    border-color: var(--high-priority);
+}
 
 .modal {
     display: none;
@@ -438,8 +501,15 @@ body.no-scroll {
 }
 
 @keyframes fadeInModal {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .close-btn {
@@ -637,7 +707,7 @@ body.no-scroll {
     .header h1 {
         text-align: center;
     }
-    
+
     .header .primary-btn {
         justify-self: end;
     }
@@ -661,7 +731,7 @@ body.no-scroll {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-    
+
     .kanban-board {
         grid-template-columns: 1fr;
         gap: 1.5rem;
@@ -687,7 +757,7 @@ body.no-scroll {
         margin-bottom: 1.5rem;
         padding-bottom: 1rem;
     }
-    
+
     .header h1 {
         font-size: 1.2rem;
     }
