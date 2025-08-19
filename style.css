@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --background-color: #1c2025;
     --sidebar-color: #262a2f;
     --card-bg: #2d3238;
@@ -17,6 +17,7 @@
     --high-priority: var(--accent-red);
 
     --overdue-color: var(--accent-red);
+    --locked-color: #e2a04a; /* New color for locked tasks */
 
     --shadow-main: 0 4px 12px rgba(0, 0, 0, 0.25);
     --shadow-light: 0 2px 5px rgba(0, 0, 0, 0.15);
@@ -419,6 +420,28 @@ body.no-scroll {
     transform: scale(0.95);
 }
 
+/* New: Styling for locked tasks */
+.kanban-card.locked {
+    border-color: var(--locked-color); /* Orange border */
+    background-color: rgba(var(--locked-color), 0.1); /* Slightly tinted background */
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.kanban-card.locked .card-action-btn {
+    pointer-events: none; /* Disable buttons */
+    opacity: 0.5;
+}
+
+.kanban-card.locked .lock-icon {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: var(--locked-color);
+    font-size: 1.2rem;
+    z-index: 5; /* Ensure it's above other elements if needed */
+}
+
 .kanban-card h4 {
     font-size: 1rem;
     color: var(--text-color);
@@ -539,6 +562,17 @@ body.no-scroll {
     color: var(--text-muted);
     text-align: center;
     margin-bottom: 1.5rem;
+}
+
+/* New: Task locked message styling */
+.task-locked-message {
+    color: var(--locked-color) !important;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border: 1px solid var(--locked-color);
+    border-radius: 5px;
+    background-color: rgba(var(--locked-color), 0.1);
 }
 
 .modal-divider {
@@ -670,6 +704,15 @@ body.no-scroll {
     gap: 1rem;
 }
 
+.board-selection-actions {
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 0.75rem;
+}
+
+.board-selection-actions .primary-btn {
+    width: 100%; /* Make buttons full width */
+}
+
 @media (max-width: 1024px) {
     .sidebar {
         position: fixed;
@@ -768,5 +811,9 @@ body.no-scroll {
 
     .kanban-column {
         padding: 1rem;
+    }
+    .board-selection-actions {
+        flex-direction: column;
+        gap: 0.5rem;
     }
 }

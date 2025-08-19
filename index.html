@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -34,6 +34,9 @@
                 <p class="user-id-text" id="userIdText">Loading...</p>
                 <p>Current Board ID:</p>
                 <p class="user-id-text" id="boardIdText">N/A</p>
+                <!-- New: Display active users for collaborative boards -->
+                <p id="activeUsersLabel" style="display: none;">Active Users:</p>
+                <p class="user-id-text" id="activeUsersCount" style="display: none;">0</p>
                 <div class="user-info-actions">
                     <button id="shareBoardBtn" class="secondary-btn">Share Board</button>
                     <button id="openBoardSelectionBtn" class="secondary-btn">Select Board</button>
@@ -128,6 +131,8 @@
         <div class="modal-content">
             <span class="close-btn">&#x2715;</span>
             <h2 id="modalTitle">Create New Task</h2>
+            <!-- New: Task Locked Message -->
+            <p id="taskLockedMessage" class="task-locked-message" style="display: none;">This task is currently being edited by another user.</p>
             <div class="form-group">
                 <label for="taskName">Task Name</label>
                 <input type="text" id="taskName" placeholder="e.g., Optimize API endpoints">
@@ -157,13 +162,14 @@
         </div>
     </div>
 
-    <!-- Board Creation/Joining Modal -->
+    <!-- Board Creation/Joining Modal (Updated for Solo/Collaborative) -->
     <div id="boardModal" class="modal">
         <div class="modal-content">
-            <h2 id="boardModalTitle">Collaborate on a Board</h2>
-            <p>Create a new board to share with your team, or join an existing one using a Board ID.</p>
-            <div class="modal-actions">
-                <button id="createBoardBtn" class="primary-btn">Create New Board</button>
+            <h2 id="boardModalTitle">Manage Boards</h2>
+            <p>Create a new board or join an existing one.</p>
+            <div class="modal-actions board-selection-actions">
+                <button id="createSoloBoardBtn" class="primary-btn">Create Solo Board</button>
+                <button id="createCollaborativeBoardBtn" class="primary-btn">Create Collaborative Board</button>
             </div>
             <hr class="modal-divider">
             <div class="form-group">
@@ -192,7 +198,6 @@
         </div>
     </div>
 
-    <!-- WICHTIG: 'type="module"' hinzufügen! -->
     <script type="module" src="script.js"></script>
 </body>
 
