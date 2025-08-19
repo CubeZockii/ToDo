@@ -14,7 +14,9 @@ import {
     query,
     where,
     getDocs,
-    setDoc
+    setDoc,
+    orderBy, // Added orderBy for sorting by createdAt
+    limit // Added limit for finding the oldest
 } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -36,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 projectId: "taskflow-841c1",
                 storageBucket: "taskflow-841c1.firebasestorage.app",
                 messagingSenderId: "109204779254",
-                appId: "1:109204779254:web:ed340a07677a37fa827cd7"
+                appId: "1:109204779254:web:ed340a07677a37fa8277cd7"
             };
             showCustomModal("Failed to load Firebase configuration. Please check the environment setup.", "Configuration Error", 'alert');
         }
@@ -74,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openModalBtn = document.getElementById('openModalBtn');
     openModalBtn.disabled = true; // Button initially disabled
     const taskModal = document.getElementById('taskModal');
-    const boardModal = document.getElementById('boardModal');
+    const boardModal = document.getElementById('boardModal'); // Initial board creation/join modal
     const shareModal = document.getElementById('shareModal');
     const modalTitle = document.getElementById('modalTitle');
     const saveTaskBtn = document.getElementById('saveTaskBtn');
@@ -110,9 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
         done: document.getElementById('column-done').querySelector('.task-list-kanban')
     };
 
-    // Board Management Elements
-    const createSoloBoardBtn = document.getElementById('createSoloBoardBtn'); // New button
-    const createCollaborativeBoardBtn = document.getElementById('createCollaborativeBoardBtn'); // New button
+    // Board Management Elements (from initial boardModal)
+    const createSoloBoardBtn = document.getElementById('createSoloBoardBtn');
+    const createCollaborativeBoardBtn = document.getElementById('createCollaborativeBoardBtn');
     const joinBoardBtn = document.getElementById('joinBoardBtn');
     const joinBoardIdInput = document.getElementById('joinBoardId');
     const shareBoardBtn = document.getElementById('shareBoardBtn');
@@ -120,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyLinkBtn = document.getElementById('copyLinkBtn');
     const shareableLinkInput = document.getElementById('shareableLink');
     const shareableBoardIdInput = document.getElementById('shareableBoardId');
-    const openBoardSelectionBtn = document.getElementById('openBoardSelectionBtn');
+    const openBoardSelectionBtn = document.getElementById('openBoardSelectionBtn'); // Button to open board selection
 
     // User Info Display
     const userIdText = document.getElementById('userIdText');
@@ -132,13 +134,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let tasks = [];
     let currentTaskToEditId = null;
     let userId = null;
-    let boardId = null;
+    let boardId = null; // Currently active board ID
     let unsubscribeTasks = null; // For Firestore tasks listener
     let unsubscribePresence = null; // For Firestore presence listener
     let isOwnerBoard = false;
     let currentBoardCollaborative = false; // New flag: is the current board collaborative?
     let activeUsers = []; // Array of active user IDs
     let heartbeatInterval = null; // Interval for presence updates
+
+    // Store user's solo board ID in localStorage (it's unique per user)
+    let mySoloBoardId = localStorage.getItem('mySoloBoardId');
+    // Store user's owned collaborative board IDs (fetched dynamically from Firestore)
+    let myCollaborativeBoards = []; // Array of { id, name } for collaborative boards
 
     // --- Custom Modal for Notifications and Confirmations ---
     const customModalHtml = `
@@ -203,23 +210,61 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // --- New Modal for Managing Boards (Solo & Collaborative) ---
+    const manageBoardsModalHtml = `
+        <div id="manageBoardsModal" class="modal">
+            <div class="modal-content bg-white p-6 rounded-xl shadow-lg w-full max-w-lg mx-auto transform transition-all duration-300 ease-in-out scale-95 opacity-0" style="opacity:1; scale:1;">
+                <span class="close-btn text-gray-500 hover:text-gray-800 text-3xl font-bold absolute top-3 right-5 cursor-pointer" id="closeManageBoardsModal">&times;</span>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Manage Your Boards</h2>
+
+                <div class="mb-6 p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                    <h3 class="text-xl font-medium text-blue-700 mb-3 flex items-center">
+                        Solo Board
+                    </h3>
+                    <div id="soloBoardSection" class="text-center">
+                        <!-- Solo board info or create button will go here -->
+                    </div>
+                </div>
+
+                <div class="mb-6 p-4 border border-green-200 bg-green-50 rounded-lg">
+                    <h3 class="text-xl font-medium text-green-700 mb-3 flex items-center">
+                        Collaborative Boards
+                    </h3>
+                    <div id="collaborativeBoardList" class="board-list-container space-y-2 mb-3">
+                        <!-- Collaborative boards will be listed here -->
+                    </div>
+                    <button style="margin-top: 30px;" id="createNewCollaborativeBoardBtn" class="primary-btn w-full py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">Create New Collaborative Board</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', manageBoardsModalHtml);
+
+    const manageBoardsModal = document.getElementById('manageBoardsModal');
+    const closeManageBoardsModalBtn = document.getElementById('closeManageBoardsModal');
+    const soloBoardSection = document.getElementById('soloBoardSection');
+    const collaborativeBoardList = document.getElementById('collaborativeBoardList');
+    const createNewCollaborativeBoardBtn = document.getElementById('createNewCollaborativeBoardBtn');
+
+
     // Function to update UI based on board activity and type
     function updateUIForBoardState(isBoardActive, isBoardCollaborative = false) {
         console.log("Updating UI for board state. Is active:", isBoardActive, "Is collaborative:", isBoardCollaborative);
         if (isBoardActive) {
             openModalBtn.disabled = false;
             boardModal.style.display = 'none';
+            manageBoardsModal.style.display = 'none'; // Ensure this is hidden
             // Show/hide share button based on board type
             shareBoardBtn.style.display = isBoardCollaborative ? 'inline-block' : 'none';
             activeUsersLabel.style.display = isBoardCollaborative ? 'block' : 'none';
             activeUsersCountElement.style.display = isBoardCollaborative ? 'block' : 'none';
-
         } else {
             openModalBtn.disabled = true;
             boardModal.style.display = 'flex'; // This ensures the modal is shown when no board is active
             shareBoardBtn.style.display = 'none';
             activeUsersLabel.style.display = 'none';
             activeUsersCountElement.style.display = 'none';
+            manageBoardsModal.style.display = 'none'; // Ensure this is hidden
         }
     }
 
@@ -257,7 +302,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("initApp called. User ID:", userId);
         const urlParams = new URLSearchParams(window.location.search);
         const urlBoardId = urlParams.get('board');
-        const storedOwnedBoardId = localStorage.getItem('myOwnedBoardId'); // Last owned board
 
         let targetBoardId = null;
         let isFromURL = false;
@@ -266,76 +310,151 @@ document.addEventListener('DOMContentLoaded', () => {
             targetBoardId = urlBoardId;
             isFromURL = true;
             console.log("Board ID from URL:", targetBoardId);
-        } else if (storedOwnedBoardId) {
-            targetBoardId = storedOwnedBoardId;
-            console.log("Board ID from LocalStorage (owned):", targetBoardId);
         }
 
+        // Fetch user's solo board and collaborative boards
+        await fetchUserBoards();
+
         if (targetBoardId) {
-            try {
-                const boardDocRef = doc(db, 'boards', targetBoardId);
-                const boardDoc = await getDoc(boardDocRef);
-
-                if (boardDoc.exists()) {
-                    const boardData = boardDoc.data();
-                    // Check if user is owner or if it's a shared board via URL
-                    if (boardData.owner === userId || (isFromURL && boardData.isCollaborative)) {
-                        boardId = targetBoardId;
-                        boardIdText.textContent = boardId;
-                        isOwnerBoard = (boardData.owner === userId);
-                        currentBoardCollaborative = boardData.isCollaborative || false; // Default to false if not set
-                        updateUIForBoardState(true, currentBoardCollaborative);
-                        listenForTasks();
-                        console.log("Successfully loaded board:", boardId, "Is owner:", isOwnerBoard, "Is collaborative:", currentBoardCollaborative);
-
-                        if (isOwnerBoard && !isFromURL) {
-                            localStorage.setItem('myOwnedBoardId', boardId); // Persist owned board
-                        } else if (!isOwnerBoard && isFromURL) {
-                            // If joining a shared board, don't save it as owned in localStorage
-                            localStorage.removeItem('myOwnedBoardId');
-                        }
-                        // Start presence tracking if collaborative
-                        if (currentBoardCollaborative) {
-                            setupUserPresence();
-                        } else {
-                            // If solo board, clear any old presence info
-                            removeUserPresence();
-                            activeUsersCountElement.textContent = '0'; // No active users on solo board
-                        }
-
-                    } else if (boardData.owner !== userId && !isFromURL) {
-                        // Board exists but not owned by user and not shared via URL, don't allow access directly
-                        console.warn("Board exists but not owned by user and not from URL. Showing board creation modal.");
-                        localStorage.removeItem('myOwnedBoardId');
-                        window.history.pushState({}, '', window.location.pathname);
-                        updateUIForBoardState(false);
-                    } else if (boardData.owner !== userId && isFromURL && !boardData.isCollaborative) {
-                        // Trying to join a solo board via URL that isn't owned by current user
-                        console.warn("Attempted to join a solo board not owned by user via URL. Access denied.");
-                        showCustomModal("This is a solo board and cannot be shared. Please create your own or join a collaborative board.", "Access Denied", 'alert');
-                        localStorage.removeItem('myOwnedBoardId');
-                        window.history.pushState({}, '', window.location.pathname);
-                        updateUIForBoardState(false);
-                    }
-                } else {
-                    // Board from URL/LocalStorage does not exist (e.g., deleted)
-                    console.warn("Board from URL/LocalStorage does not exist. Showing board creation modal.");
-                    localStorage.removeItem('myOwnedBoardId');
-                    window.history.pushState({}, '', window.location.pathname);
-                    updateUIForBoardState(false);
-                }
-            } catch (error) {
-                console.error("Error checking board existence:", error);
-                showCustomModal("Error loading board. Please check your connection.", "Error", 'alert');
-                localStorage.removeItem('myOwnedBoardId');
-                window.history.pushState({}, '', window.location.pathname);
-                updateUIForBoardState(false);
+            // Attempt to load the board specified in the URL
+            await loadBoard(targetBoardId, isFromURL);
+        } else if (mySoloBoardId) {
+            // If no URL board, try to load the user's solo board if it exists
+            await loadBoard(mySoloBoardId);
+        } else if (myCollaborativeBoards.length > 0) {
+            // If no solo board, check for collaborative boards
+            if (myCollaborativeBoards.length === 1) {
+                // Automatically load if only one collaborative board
+                await loadBoard(myCollaborativeBoards[0].id);
+            } else {
+                // If multiple collaborative boards, open the selection modal
+                openManageBoardsModal();
             }
         } else {
-            console.log("No Board ID in URL or LocalStorage. Showing board creation modal.");
+            // No boards found, show the initial board creation/join modal
+            console.log("No Board ID in URL or LocalStorage, and no owned boards found. Showing board creation modal.");
             updateUIForBoardState(false);
         }
     }
+
+    // New function to fetch user's solo and collaborative boards
+    async function fetchUserBoards() {
+        if (!userId) {
+            console.warn("fetchUserBoards called without userId.");
+            return;
+        }
+        try {
+            const ownedBoardsQuery = query(collection(db, 'boards'), where('owner', '==', userId));
+            const querySnapshot = await getDocs(ownedBoardsQuery);
+
+            mySoloBoardId = null; // Reset solo board ID
+            myCollaborativeBoards = []; // Reset collaborative boards
+
+            querySnapshot.forEach(doc => {
+                const boardData = doc.data();
+                if (boardData.isCollaborative) {
+                    myCollaborativeBoards.push({ id: doc.id, name: boardData.name || `Board ${doc.id.substring(0, 4)}`, createdAt: boardData.createdAt });
+                } else {
+                    // Assuming only one solo board is ever created per user
+                    mySoloBoardId = doc.id;
+                }
+            });
+            // Sort collaborative boards by createdAt to easily find the oldest
+            myCollaborativeBoards.sort((a, b) => a.createdAt.toMillis() - b.createdAt.toMillis());
+
+            localStorage.setItem('mySoloBoardId', mySoloBoardId || ''); // Update local storage for solo board
+            console.log("Fetched user boards. Solo:", mySoloBoardId, "Collaborative:", myCollaborativeBoards.length);
+        } catch (error) {
+            console.error("Error fetching user boards:", error);
+            showCustomModal("Error fetching your boards. Please try again.", "Error", 'alert');
+        }
+    }
+
+    // New function to load a board
+    async function loadBoard(idToLoad, isFromURL = false) {
+        if (!idToLoad) {
+            console.warn("loadBoard called with empty ID.");
+            updateUIForBoardState(false);
+            return false; // Indicate failure
+        }
+
+        try {
+            const boardDocRef = doc(db, 'boards', idToLoad);
+            const boardDoc = await getDoc(boardDocRef);
+
+            if (boardDoc.exists()) {
+                const boardData = boardDoc.data();
+                if (boardData.owner === userId || (isFromURL && boardData.isCollaborative)) {
+                    boardId = idToLoad;
+                    boardIdText.textContent = boardId;
+                    isOwnerBoard = (boardData.owner === userId);
+                    currentBoardCollaborative = boardData.isCollaborative || false;
+
+                    window.history.pushState({}, '', `?board=${boardId}`);
+                    updateUIForBoardState(true, currentBoardCollaborative);
+                    listenForTasks();
+                    console.log("Successfully loaded board:", boardId, "Is owner:", isOwnerBoard, "Is collaborative:", currentBoardCollaborative);
+
+                    // Update localStorage for solo board if applicable
+                    if (!currentBoardCollaborative) {
+                        localStorage.setItem('mySoloBoardId', boardId);
+                    } else {
+                        // If switching from solo to collaborative, clear solo board from local storage
+                        // (or if explicitly loading a collaborative board, don't set solo board)
+                        // No action needed for collaborative boards here, as they are fetched dynamically.
+                    }
+
+                    // Start presence tracking if collaborative
+                    if (currentBoardCollaborative) {
+                        setupUserPresence();
+                    } else {
+                        removeUserPresence();
+                        activeUsersCountElement.textContent = '0';
+                    }
+
+                    return true; // Board loaded successfully
+                } else if (!boardData.isCollaborative && isFromURL && boardData.owner !== userId) {
+                    // Trying to join a solo board via URL that isn't owned by current user
+                    console.warn("Attempted to join a solo board not owned by user via URL. Access denied.");
+                    showCustomModal("This is a solo board and cannot be shared. Please create your own or join a collaborative board.", "Access Denied", 'alert');
+                    window.history.pushState({}, '', window.location.pathname);
+                    updateUIForBoardState(false);
+                    return false;
+                } else if (boardData.isCollaborative && !isFromURL && boardData.owner !== userId) {
+                    // Trying to load a collaborative board not owned by user, not from URL (e.g., old localstorage reference)
+                    console.warn("Attempted to load a collaborative board not owned by user without URL. Access denied.");
+                    showCustomModal("You do not have access to this board.", "Access Denied", 'alert');
+                    window.history.pushState({}, '', window.location.pathname);
+                    updateUIForBoardState(false);
+                    return false;
+                }
+            } else {
+                // Board from URL/LocalStorage does not exist (e.g., deleted)
+                console.warn("Board from URL/LocalStorage does not exist:", idToLoad);
+                showCustomModal("Board not found or no longer exists. Please check the ID or create a new board.", "Board Not Found", 'alert');
+                // Clear any invalid local storage reference for solo board
+                if (localStorage.getItem('mySoloBoardId') === idToLoad) {
+                    localStorage.removeItem('mySoloBoardId');
+                    mySoloBoardId = null; // Update in-memory state
+                }
+                window.history.pushState({}, '', window.location.pathname);
+                updateUIForBoardState(false);
+                return false;
+            }
+        } catch (error) {
+            console.error("Error loading board:", error);
+            showCustomModal("Error loading board. Please check your connection.", "Error", 'alert');
+            // Clear any invalid local storage reference for solo board
+            if (localStorage.getItem('mySoloBoardId') === idToLoad) {
+                localStorage.removeItem('mySoloBoardId');
+                mySoloBoardId = null; // Update in-memory state
+            }
+            window.history.pushState({}, '', window.location.pathname);
+            updateUIForBoardState(false);
+            return false;
+        }
+    }
+
 
     // --- Board Management ---
     async function createNewBoard(isCollaborative) {
@@ -345,78 +464,58 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("Attempted to create board before user was authenticated.");
             return;
         }
-        try {
-            // Check if the user already has an owned board and wants to switch its type
-            const myBoardsQuery = query(collection(db, 'boards'), where('owner', '==', userId));
-            const myBoardsSnapshot = await getDocs(myBoardsQuery);
 
-            if (!myBoardsSnapshot.empty) {
-                const existingBoardDoc = myBoardsSnapshot.docs[0];
-                const existingBoardData = existingBoardDoc.data();
-                if (existingBoardData.isCollaborative === isCollaborative) {
-                    // Board type already matches, just load it
-                    boardId = existingBoardDoc.id;
-                    showCustomModal(`You are already on a ${isCollaborative ? 'collaborative' : 'solo'} board.`, "Board already available", 'alert');
-                } else {
-                    // Type mismatch, update existing board type
-                    showCustomModal(`You have an existing board. Do you want to convert it to a ${isCollaborative ? 'collaborative' : 'solo'} board?`, "Convert Board", 'confirm', async (confirmed) => {
-                        if (confirmed) {
-                            boardId = existingBoardDoc.id;
-                            await updateDoc(doc(db, 'boards', boardId), { isCollaborative: isCollaborative });
-                            showCustomModal("Board type updated!", "Success", 'alert');
-                            // Continue with loading the board
-                            localStorage.setItem('myOwnedBoardId', boardId);
-                            isOwnerBoard = true;
-                            currentBoardCollaborative = isCollaborative;
-                            window.history.pushState({}, '', `?board=${boardId}`);
-                            boardIdText.textContent = boardId;
-                            boardModal.style.display = 'none';
-                            updateUIForBoardState(true, currentBoardCollaborative);
-                            listenForTasks();
-                            if (currentBoardCollaborative) {
-                                setupUserPresence();
+        try {
+            if (!isCollaborative) { // Creating a Solo Board
+                if (mySoloBoardId) {
+                    showCustomModal(
+                        `You already have a solo board (ID: ${mySoloBoardId}). Would you like to load it?`,
+                        "Solo Board Exists",
+                        'confirm',
+                        async (confirmed) => {
+                            if (confirmed) {
+                                const loaded = await loadBoard(mySoloBoardId);
+                                if (loaded) toggleSidebar(true);
                             } else {
-                                removeUserPresence();
-                                activeUsersCountElement.textContent = '0';
+                                console.log("User chose not to load existing solo board.");
                             }
-                            // --- NEW: Close sidebar on board type switch ---
-                            toggleSidebar(true);
-                        } else {
-                            console.log("Board type conversion cancelled.");
-                            return; // Stop function if cancelled
                         }
+                    );
+                    return; // Exit as user made a choice or cancelled
+                } else {
+                    // Create a new solo board
+                    const newBoardRef = doc(collection(db, 'boards'));
+                    const newBoardId = newBoardRef.id;
+                    await setDoc(newBoardRef, {
+                        createdAt: serverTimestamp(),
+                        owner: userId,
+                        isCollaborative: false,
+                        name: "My Solo Board" // Default name for solo board
                     });
-                    return; // Exit after handling the conversion prompt
+                    mySoloBoardId = newBoardId;
+                    localStorage.setItem('mySoloBoardId', newBoardId); // Persist solo board ID
+                    showCustomModal(`New solo board created! ID: ${newBoardId}`, "Board Created", 'alert');
+                    const loaded = await loadBoard(newBoardId);
+                    if (loaded) toggleSidebar(true);
                 }
-            } else {
-                // No existing board, create a new one
+            } else { // Creating a Collaborative Board
+                const newBoardName = prompt("Enter a name for your new collaborative board (optional):");
+                const boardName = newBoardName ? newBoardName.trim() : `Collaborative Board ${new Date().toLocaleDateString()}`;
+
                 const newBoardRef = doc(collection(db, 'boards'));
-                boardId = newBoardRef.id;
+                const newBoardId = newBoardRef.id;
                 await setDoc(newBoardRef, {
                     createdAt: serverTimestamp(),
                     owner: userId,
-                    isCollaborative: isCollaborative // Set board type
+                    isCollaborative: true,
+                    name: boardName
                 });
-                showCustomModal(`New ${isCollaborative ? 'collaborative' : 'solo'} board created! ID: ${boardId}`, "Board created", 'alert');
+                // After creation, re-fetch user boards to update the in-memory list
+                await fetchUserBoards();
+                showCustomModal(`New collaborative board created! ID: ${newBoardId}`, "Board Created", 'alert');
+                const loaded = await loadBoard(newBoardId);
+                if (loaded) toggleSidebar(true);
             }
-
-            localStorage.setItem('myOwnedBoardId', boardId);
-            isOwnerBoard = true;
-            currentBoardCollaborative = isCollaborative; // Set this flag
-
-            window.history.pushState({}, '', `?board=${boardId}`);
-            boardIdText.textContent = boardId;
-            boardModal.style.display = 'none';
-            updateUIForBoardState(true, currentBoardCollaborative);
-            listenForTasks();
-            if (currentBoardCollaborative) {
-                setupUserPresence();
-            } else {
-                removeUserPresence(); // Ensure presence is cleaned up if it was a collaborative board before
-                activeUsersCountElement.textContent = '0';
-            }
-            // --- NEW: Close sidebar after creating a new board ---
-            toggleSidebar(true);
 
         } catch (error) {
             console.error("Error creating board:", error);
@@ -440,64 +539,233 @@ document.addEventListener('DOMContentLoaded', () => {
             showCustomModal("Please enter a board ID.", "Input required", 'alert');
             return;
         }
-
-        try {
-            console.log("Attempting to check if board exists:", inputBoardId);
-            const boardDocRef = doc(db, 'boards', inputBoardId);
-            const boardDoc = await getDoc(boardDocRef);
-            if (boardDoc.exists()) {
-                const boardData = boardDoc.data();
-                if (!boardData.isCollaborative && boardData.owner !== userId) {
-                    showCustomModal("This is a solo board and cannot be joined by others.", "Access Denied", 'alert');
-                    return;
-                }
-
-                boardId = inputBoardId;
-                isOwnerBoard = (boardData.owner === userId);
-                currentBoardCollaborative = boardData.isCollaborative || false;
-
-                window.history.pushState({}, '', `?board=${boardId}`);
-                boardIdText.textContent = boardId;
-                boardModal.style.display = 'none';
-                updateUIForBoardState(true, currentBoardCollaborative);
-                listenForTasks();
-                showCustomModal(`Board ${boardId} successfully joined!`, "Joined the board", 'alert');
-
-                // If joining a collaborative board, set up presence. If solo, remove presence.
-                if (currentBoardCollaborative) {
-                    setupUserPresence();
-                } else {
-                    removeUserPresence();
-                    activeUsersCountElement.textContent = '0';
-                }
-
-                // If joining a board that happens to be owned by the user (e.g., via share link to their own board)
-                if (isOwnerBoard) {
-                    localStorage.setItem('myOwnedBoardId', boardId);
-                } else {
-                    localStorage.removeItem('myOwnedBoardId'); // Don't save non-owned boards as "my owned board"
-                }
-                // --- NEW: Close sidebar after joining a board ---
-                toggleSidebar(true);
-
-            } else {
-                console.warn("Board does not exist:", inputBoardId);
-                showCustomModal("Board not found. Please check the ID.", "Board not found", 'alert');
-            }
-        } catch (error) {
-            console.error("Error joining the board:", error);
-            showCustomModal("Unable to join board. Please try again.", "Error", 'alert');
+        const loaded = await loadBoard(inputBoardId, true); // Treat as if from URL for access check
+        if (loaded) {
+            joinBoardIdInput.value = ''; // Clear input after attempt
+            toggleSidebar(true);
         }
     });
 
-    // --- Additional button for Board Selection Modal ---
-    openBoardSelectionBtn.addEventListener('click', () => {
-        console.log("Open Board Selection button clicked.");
-        boardModal.style.display = 'flex';
-        body.classList.add('no-scroll');
-        document.getElementById('boardModalTitle').textContent = 'Manage Boards';
-        joinBoardIdInput.value = '';
+    // --- Open Manage Boards Modal ---
+    openBoardSelectionBtn.addEventListener('click', async () => {
+        console.log("Open Manage Boards button clicked.");
+        // Ensure initial boardModal is hidden if open
+        boardModal.style.display = 'none';
+
+        // Fetch latest board data before opening the modal
+        await fetchUserBoards();
+        openManageBoardsModal();
     });
+
+    // Function to open and populate the Manage Boards Modal
+    function openManageBoardsModal() {
+        soloBoardSection.innerHTML = ''; // Clear existing content
+        collaborativeBoardList.innerHTML = ''; // Clear existing content
+
+        // Populate Solo Board Section
+        if (mySoloBoardId) {
+            soloBoardSection.innerHTML = `
+                <p style="text-align: left" class="mb-2 text-gray-700">Your current solo board: <span class="font-bold">${mySoloBoardId}</span></p>
+                <button style="margin-bottom: 20px;" id="loadSoloBoardBtn" class="primary-btn w-full py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Load My Solo Board</button>
+            `;
+            document.getElementById('loadSoloBoardBtn').addEventListener('click', async () => {
+                const loaded = await loadBoard(mySoloBoardId);
+                if (loaded) {
+                    manageBoardsModal.style.display = 'none';
+                    body.classList.remove('no-scroll');
+                }
+            });
+        } else {
+            soloBoardSection.innerHTML = `
+                <p class="mb-2 text-gray-700">You don't have a solo board yet.</p>
+                <button style="margin-bottom: 20px;" id="createSoloBoardFromManageBtn" class="primary-btn w-full py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Create New Solo Board</button>
+            `;
+            document.getElementById('createSoloBoardFromManageBtn').addEventListener('click', async () => {
+                await createNewBoard(false); // Call the general create function for solo
+                manageBoardsModal.style.display = 'none';
+                body.classList.remove('no-scroll');
+            });
+        }
+
+        // Populate Collaborative Boards List
+        if (myCollaborativeBoards.length === 0) {
+            collaborativeBoardList.innerHTML = '<p class="text-gray-600">You don\'t have any collaborative boards yet.</p>';
+        } else {
+            myCollaborativeBoards.forEach(board => {
+                const boardItem = document.createElement('div');
+                boardItem.className = 'flex justify-between items-center p-3 bg-white border border-gray-200 rounded-md shadow-sm transition duration-150 ease-in-out hover:bg-gray-50';
+                boardItem.innerHTML = `
+                    <span class="font-medium text-gray-800">${board.name} <span class="text-sm text-gray-500">(ID: ${board.id.substring(0, 4)}...)</span></span>
+                    <div class="flex space-x-2">
+                        <button style="margin-top: 20px;" class="select-collaborative-board-item-btn secondary-btn px-4 py-2 rounded-md transition duration-150 ease-in-out hover:bg-gray-200" data-id="${board.id}">Select</button>
+                        ${isOwnerBoard ? `
+                            <button style="margin-top: 10px;" class="edit-collaborative-board-btn secondary-btn px-4 py-2 rounded-md transition duration-150 ease-in-out hover:bg-yellow-200" data-id="${board.id}" data-name="${board.name}">Edit</button>
+                            <button style="margin-top: 10px; margin-bottom: 20px;" class="delete-collaborative-board-btn secondary-btn px-4 py-2 rounded-md transition duration-150 ease-in-out hover:bg-red-200" data-id="${board.id}">Delete</button>
+                        ` : ''}
+                    </div>
+                `;
+                collaborativeBoardList.appendChild(boardItem);
+            });
+
+            document.querySelectorAll('.select-collaborative-board-item-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const selectedBoardId = e.target.dataset.id;
+                    const loaded = await loadBoard(selectedBoardId);
+                    if (loaded) {
+                        manageBoardsModal.style.display = 'none';
+                        body.classList.remove('no-scroll');
+                    }
+                });
+            });
+
+            // Event listeners for editing and deleting collaborative boards
+            document.querySelectorAll('.edit-collaborative-board-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const boardIdToEdit = e.target.dataset.id;
+                    const currentName = e.target.dataset.name;
+                    manageBoardsModal.style.display = 'none';
+                    body.classList.remove('no-scroll');
+                    await editCollaborativeBoard(boardIdToEdit, currentName);
+                });
+            });
+
+            document.querySelectorAll('.delete-collaborative-board-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const boardIdToDelete = e.target.dataset.id;
+                    manageBoardsModal.style.display = 'none';
+                    body.classList.remove('no-scroll');
+                    await deleteCollaborativeBoard(boardIdToDelete);
+                });
+            });
+        }
+
+        // Event listener for creating new collaborative board from this modal
+        createNewCollaborativeBoardBtn.onclick = async () => {
+            await createNewBoard(true);
+            manageBoardsModal.style.display = 'none';
+            body.classList.remove('no-scroll');
+        };
+
+        manageBoardsModal.style.display = 'flex';
+        manageBoardsModal.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0'); // Reset animation
+        manageBoardsModal.querySelector('.modal-content').classList.add('scale-100', 'opacity-100');
+        body.classList.add('no-scroll');
+    }
+
+    closeManageBoardsModalBtn.addEventListener('click', () => {
+        manageBoardsModal.style.display = 'none';
+        body.classList.remove('no-scroll');
+        // If no board is active after closing, show the initial board modal (for create/join)
+        if (!boardId) {
+            updateUIForBoardState(false);
+        }
+    });
+
+    // New: Edit Collaborative Board Function
+    async function editCollaborativeBoard(boardIdToEdit, currentName) {
+        showCustomModal(`Enter new name for board ID: ${boardIdToEdit}`, "Edit Board Name", 'confirm', async (confirmed) => {
+            if (confirmed) {
+                const newName = prompt(`Rename board "${currentName}" to:`, currentName);
+                if (newName && newName.trim() !== '') {
+                    try {
+                        await updateDoc(doc(db, 'boards', boardIdToEdit), { name: newName.trim() });
+                        showCustomModal("Board name updated successfully!", "Success", 'alert');
+                        await fetchUserBoards(); // Re-fetch to update the list in the modal
+                        openManageBoardsModal(); // Re-open to display updated list
+                    } catch (error) {
+                        console.error("Error updating board name:", error);
+                        showCustomModal("Failed to update board name.", "Error", 'alert');
+                    }
+                } else if (newName !== null) { // User clicked OK but entered empty/whitespace
+                    showCustomModal("Board name cannot be empty.", "Invalid Input", 'alert');
+                }
+            }
+        });
+    }
+
+    // Helper function to find the oldest collaborative board
+    async function findOldestCollaborativeBoard() {
+        try {
+            const q = query(
+                collection(db, 'boards'),
+                where('owner', '==', userId),
+                where('isCollaborative', '==', true),
+                orderBy('createdAt', 'asc'), // Order by creation time ascending
+                limit(1) // Get only the first (oldest) one
+            );
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const oldestBoard = querySnapshot.docs[0];
+                return { id: oldestBoard.id, ...oldestBoard.data() };
+            }
+            return null;
+        } catch (error) {
+            console.error("Error finding oldest collaborative board:", error);
+            return null;
+        }
+    }
+
+
+    // New: Delete Collaborative Board Function
+    async function deleteCollaborativeBoard(boardIdToDelete) {
+        showCustomModal(`Are you sure you want to delete this collaborative board (ID: ${boardIdToDelete})? This action cannot be undone.`, "Confirm Delete Board", 'confirm', async (confirmed) => {
+            if (confirmed) {
+                try {
+                    // Delete all tasks within the board's subcollection
+                    const tasksQuery = query(collection(db, 'boards', boardIdToDelete, 'tasks'));
+                    const taskSnapshot = await getDocs(tasksQuery);
+                    const deletePromises = [];
+                    taskSnapshot.forEach(taskDoc => {
+                        deletePromises.push(deleteDoc(doc(db, 'boards', boardIdToDelete, 'tasks', taskDoc.id)));
+                    });
+                    await Promise.all(deletePromises);
+
+                    // Delete the board document itself
+                    await deleteDoc(doc(db, 'boards', boardIdToDelete));
+
+                    // If the deleted board was the currently active one, clear current board state
+                    if (boardId === boardIdToDelete) {
+                        boardId = null;
+                        boardIdText.textContent = 'None';
+                        currentBoardCollaborative = false;
+                        removeUserPresence(); // Ensure presence is cleaned up
+                        if (unsubscribeTasks) {
+                            unsubscribeTasks();
+                            unsubscribeTasks = null;
+                        }
+                        window.history.pushState({}, '', window.location.pathname); // Clear URL param
+
+                        // After deletion, re-evaluate which board to load or show modal
+                        await fetchUserBoards(); // Re-fetch all user boards
+                        if (myCollaborativeBoards.length > 0) {
+                            // If other collaborative boards exist, load the oldest one
+                            const oldestBoard = await findOldestCollaborativeBoard();
+                            if (oldestBoard) {
+                                await loadBoard(oldestBoard.id);
+                                showCustomModal("Board deleted. You have been switched to your oldest collaborative board.", "Board Deleted", 'alert');
+                            } else {
+                                // This case should theoretically not be reached if myCollaborativeBoards.length > 0
+                                // but as a fallback, show the board modal
+                                updateUIForBoardState(false);
+                                showCustomModal("Board deleted. No other collaborative boards found. Please create or join a new board.", "Board Deleted", 'alert');
+                            }
+                        } else {
+                            // If no other collaborative boards, open the board creation/join modal
+                            updateUIForBoardState(false);
+                            showCustomModal("Board deleted. No other collaborative boards found. Please create or join a new board.", "Board Deleted", 'alert');
+                        }
+                    } else {
+                        // If a non-active collaborative board was deleted, just update the list
+                        await fetchUserBoards();
+                        showCustomModal("Board deleted successfully!", "Success", 'alert');
+                    }
+                } catch (error) {
+                    console.error("Error deleting board:", error);
+                    showCustomModal("Failed to delete board. Please try again.", "Error", 'alert');
+                }
+            }
+        });
+    }
 
     // --- Real-time Data Synchronization with Firestore ---
     function listenForTasks() {
@@ -529,6 +797,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (unsubscribePresence) {
             unsubscribePresence(); // Clean up previous listener
         }
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval); // Clear old heartbeat
+        }
         if (!boardId || !userId) {
             console.warn("Cannot set up user presence without boardId or userId.");
             return;
@@ -552,9 +823,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePresence();
 
         // Set up heartbeat interval
-        if (heartbeatInterval) {
-            clearInterval(heartbeatInterval);
-        }
         heartbeatInterval = setInterval(updatePresence, 10000); // Update every 10 seconds
 
         // Listen for all users on this board
@@ -679,7 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Re-enable inputs
         taskNameInput.disabled = false;
         taskDescriptionInput.disabled = false;
-        taskPriorityDisplay.style.pointerEvents = 'auto';
+        priorityDropdownContainer.style.pointerEvents = 'auto'; // Re-enable dropdown container
         taskDueDateInput.disabled = false;
         saveTaskBtn.disabled = false;
     }
@@ -733,6 +1001,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === customModal) {
             customModal.style.display = 'none';
             body.classList.remove('no-scroll');
+        }
+        if (event.target === manageBoardsModal) { // Handle clicking outside manage boards modal
+            manageBoardsModal.style.display = 'none';
+            body.classList.remove('no-scroll');
+            if (!boardId) { // If no board is selected, re-open the initial board creation/join modal
+                updateUIForBoardState(false);
+            }
         }
         if (!priorityDropdownContainer.contains(event.target)) {
             taskPriorityMenu.style.display = 'none';
@@ -806,7 +1081,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Disable all inputs and save button
                 taskNameInput.disabled = true;
                 taskDescriptionInput.disabled = true;
-                taskPriorityDisplay.style.pointerEvents = 'none'; // Disable dropdown click
+                priorityDropdownContainer.style.pointerEvents = 'none'; // Disable dropdown container
                 taskDueDateInput.disabled = true;
                 saveTaskBtn.disabled = true;
                 modalTitle.textContent = 'View Task'; // Change title to indicate read-only view
