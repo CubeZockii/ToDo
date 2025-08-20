@@ -1174,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let lockIconHtml = '';
             if (isTaskLockedByOther) {
-                lockIconHtml = `<span class="lock-icon">&#128274;</span>`; // Unicode lock icon
+                lockIconHtml = `<img src="lock.svg" alt="Locked" class="lock-icon">`;
             }
 
             kanbanCard.innerHTML = `
