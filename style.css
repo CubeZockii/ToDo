@@ -433,13 +433,14 @@ body.no-scroll {
     opacity: 0.5;
 }
 
+/* This is the rule you provided, with the updated positioning */
 .kanban-card.locked .lock-icon {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    bottom: 10px; /* Use bottom instead of top */
+    right: 10px; /* Use right instead of left */
     color: var(--locked-color);
     font-size: 1.2rem;
-    z-index: 5; /* Ensure it's above other elements if needed */
+    z-index: 5;
 }
 
 .kanban-card h4 {
