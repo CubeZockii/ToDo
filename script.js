@@ -1179,6 +1179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             kanbanCard.innerHTML = `
                 ${lockIconHtml}
+                <h1></h1>
                 <h4>${task.name}</h4>
                 <p>${task.description ? task.description.substring(0, 100) : ''}${task.description && task.description.length > 100 ? '...' : ''}</p>
                 <div class="card-actions">
