@@ -1183,10 +1183,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p>${task.description ? task.description.substring(0, 100) : ''}${task.description && task.description.length > 100 ? '...' : ''}</p>
                 <div class="card-actions">
                     <button class="card-action-btn edit-btn" data-id="${task.id}" ${isTaskLockedByOther ? 'disabled' : ''}>
-                        <img src="https://img.icons8.com/material-outlined/24/000000/edit--v1.png" alt="Edit">
+                        <img src="edit-3.svg" alt="Edit">
                     </button>
                     <button class="card-action-btn delete-btn" data-id="${task.id}" ${isTaskLockedByOther ? 'disabled' : ''}>
-                        <img src="https://img.icons8.com/material-outlined/24/000000/trash--v1.png" alt="Delete">
+                        <img src="trash-2.svg" alt="Delete">
                     </button>
                 </div>
             `;
