@@ -1,4 +1,4 @@
-﻿import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
 import {
     getFirestore,
@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Board Management Elements (from initial boardModal)
     const createSoloBoardBtn = document.getElementById('createSoloBoardBtn');
     const createCollaborativeBoardBtn = document.getElementById('createCollaborativeBoardBtn');
+    // joinBoardBtn and joinBoardIdInput are now associated with manageBoardsModal
     const joinBoardBtn = document.getElementById('joinBoardBtn');
     const joinBoardIdInput = document.getElementById('joinBoardId');
     const shareBoardBtn = document.getElementById('shareBoardBtn');
@@ -235,6 +236,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <button style="margin-top: 30px;" id="createNewCollaborativeBoardBtn" class="primary-btn w-full py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">Create New Collaborative Board</button>
                 </div>
+
+                <hr class="modal-divider">
+
+                <!-- Moved 'Join Existing Board' section here from boardModal -->
+                <div class="form-group">
+                    <label for="joinBoardId">Join Existing Board</label>
+                    <input type="text" id="joinBoardId" placeholder="Enter Board ID">
+                </div>
+                <button id="joinBoardBtn" class="secondary-btn">Join Board</button>
+
             </div>
         </div>
     `;
@@ -527,6 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createCollaborativeBoardBtn.addEventListener('click', () => createNewBoard(true));
 
 
+    // This event listener now specifically listens for the join button within manageBoardsModal.
     joinBoardBtn.addEventListener('click', async () => {
         console.log("Join Board button clicked.");
         if (!userId) {
@@ -561,6 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function openManageBoardsModal() {
         soloBoardSection.innerHTML = ''; // Clear existing content
         collaborativeBoardList.innerHTML = ''; // Clear existing content
+        joinBoardIdInput.value = ''; // Clear join board input when modal opens
 
         // Populate Solo Board Section
         if (mySoloBoardId) {
@@ -577,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } else {
             soloBoardSection.innerHTML = `
-                <p class="mb-2 text-gray-700">You don't have a solo board yet.</p>
+                <p style="text-align: left" class="mb-2 text-gray-700">You don't have a solo board yet.</p>
                 <button style="margin-bottom: 20px;" id="createSoloBoardFromManageBtn" class="primary-btn w-full py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Create New Solo Board</button>
             `;
             document.getElementById('createSoloBoardFromManageBtn').addEventListener('click', async () => {
@@ -589,13 +602,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Populate Collaborative Boards List
         if (myCollaborativeBoards.length === 0) {
-            collaborativeBoardList.innerHTML = '<p class="text-gray-600">You don\'t have any collaborative boards yet.</p>';
+            collaborativeBoardList.innerHTML = '<p style="text-align: left" class="text-gray-600">You don\'t have any collaborative boards yet.</p>';
         } else {
             myCollaborativeBoards.forEach(board => {
                 const boardItem = document.createElement('div');
                 boardItem.className = 'flex justify-between items-center p-3 bg-white border border-gray-200 rounded-md shadow-sm transition duration-150 ease-in-out hover:bg-gray-50';
                 boardItem.innerHTML = `
-                    <span class="font-medium text-gray-800">${board.name} <span class="text-sm text-gray-500">(ID: ${board.id.substring(0, 4)}...)</span></span>
+                    <span class="font-medium text-gray-800">${board.name} <span class="text-sm text-gray-500">(ID: ${board.id.substring(0, 8)}...)</span></span>
                     <div class="flex space-x-2">
                         <button style="margin-top: 20px;" class="select-collaborative-board-item-btn secondary-btn px-4 py-2 rounded-md transition duration-150 ease-in-out hover:bg-gray-200" data-id="${board.id}">Select</button>
                         ${isOwnerBoard ? `
