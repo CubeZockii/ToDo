@@ -40,6 +40,8 @@
                 <div class="user-info-actions">
                     <button id="shareBoardBtn" class="secondary-btn">Share Board</button>
                     <button id="openBoardSelectionBtn" class="secondary-btn">Select Board</button>
+                    <!-- New button for joining collaborative boards from solo view -->
+                    <button id="joinCollaborativeBoardShortcutBtn" class="secondary-btn" style="display: none; margin-top: 10px;">Join Collaborative Board</button>
                 </div>
             </div>
         </aside>
@@ -163,6 +165,7 @@
     </div>
 
     <!-- Board Creation/Joining Modal (Updated for Solo/Collaborative) -->
+    <!-- This modal remains unchanged as per user request -->
     <div id="boardModal" class="modal">
         <div class="modal-content">
             <h2 id="boardModalTitle">Manage Boards</h2>
@@ -177,6 +180,20 @@
                 <input type="text" id="joinBoardId" placeholder="Enter Board ID">
             </div>
             <button id="joinBoardBtn" class="secondary-btn">Join Board</button>
+        </div>
+    </div>
+
+    <!-- NEW: Join Collaborative Board Shortcut Modal -->
+    <div id="joinCollaborativeBoardModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeJoinCollaborativeBoardModal">&times;</span>
+            <h2>Join Collaborative Board</h2>
+            <p>Enter the ID of the collaborative board you wish to join.</p>
+            <div class="form-group">
+                <label for="joinCollaborativeBoardIdInput">Board ID</label>
+                <input type="text" id="joinCollaborativeBoardIdInput" placeholder="Enter Board ID">
+            </div>
+            <button id="joinCollaborativeBoardConfirmBtn" class="primary-btn">Join Board</button>
         </div>
     </div>
 

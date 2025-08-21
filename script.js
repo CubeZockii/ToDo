@@ -124,6 +124,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareableBoardIdInput = document.getElementById('shareableBoardId');
     const openBoardSelectionBtn = document.getElementById('openBoardSelectionBtn'); // Button to open board selection
 
+    // New: Shortcut button for joining collaborative boards
+    const joinCollaborativeBoardShortcutBtn = document.getElementById('joinCollaborativeBoardShortcutBtn');
+
+    // NEW: Elements for the new Join Collaborative Board Modal
+    const joinCollaborativeBoardModal = document.getElementById('joinCollaborativeBoardModal');
+    const closeJoinCollaborativeBoardModalBtn = document.getElementById('closeJoinCollaborativeBoardModal');
+    const joinCollaborativeBoardIdInput = document.getElementById('joinCollaborativeBoardIdInput');
+    const joinCollaborativeBoardConfirmBtn = document.getElementById('joinCollaborativeBoardConfirmBtn');
+
+
     // User Info Display
     const userIdText = document.getElementById('userIdText');
     const boardIdText = document.getElementById('boardIdText');
@@ -254,10 +264,15 @@ document.addEventListener('DOMContentLoaded', () => {
             openModalBtn.disabled = false;
             boardModal.style.display = 'none';
             manageBoardsModal.style.display = 'none'; // Ensure this is hidden
+            joinCollaborativeBoardModal.style.display = 'none'; // Ensure new join modal is hidden
             // Show/hide share button based on board type
             shareBoardBtn.style.display = isBoardCollaborative ? 'inline-block' : 'none';
             activeUsersLabel.style.display = isBoardCollaborative ? 'block' : 'none';
             activeUsersCountElement.style.display = isBoardCollaborative ? 'block' : 'none';
+
+            // Show/hide the "Join Collaborative Board" shortcut button ONLY if it's a solo board
+            joinCollaborativeBoardShortcutBtn.style.display = isBoardCollaborative ? 'none' : 'inline-block';
+
         } else {
             openModalBtn.disabled = true;
             boardModal.style.display = 'flex'; // This ensures the modal is shown when no board is active
@@ -265,6 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
             activeUsersLabel.style.display = 'none';
             activeUsersCountElement.style.display = 'none';
             manageBoardsModal.style.display = 'none'; // Ensure this is hidden
+            joinCollaborativeBoardModal.style.display = 'none'; // Ensure new join modal is hidden
+            joinCollaborativeBoardShortcutBtn.style.display = 'none'; // Always hide if no board is active
         }
     }
 
@@ -527,8 +544,9 @@ document.addEventListener('DOMContentLoaded', () => {
     createCollaborativeBoardBtn.addEventListener('click', () => createNewBoard(true));
 
 
+    // This joinBoardBtn is for the original boardModal, which stays the same
     joinBoardBtn.addEventListener('click', async () => {
-        console.log("Join Board button clicked.");
+        console.log("Join Board button clicked (from original boardModal).");
         if (!userId) {
             showCustomModal("User is not logged in. Please wait until the login process is complete.", "Registration pending", 'alert');
             console.warn("Attempted to join board before user was authenticated.");
@@ -549,13 +567,57 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Open Manage Boards Modal ---
     openBoardSelectionBtn.addEventListener('click', async () => {
         console.log("Open Manage Boards button clicked.");
-        // Ensure initial boardModal is hidden if open
+        // Ensure initial boardModal and new join modal are hidden if open
         boardModal.style.display = 'none';
+        joinCollaborativeBoardModal.style.display = 'none';
 
         // Fetch latest board data before opening the modal
         await fetchUserBoards();
         openManageBoardsModal();
     });
+
+    // New: Event listener for the "Join Collaborative Board" shortcut button
+    joinCollaborativeBoardShortcutBtn.addEventListener('click', () => {
+        console.log("Join Collaborative Board shortcut button clicked.");
+        openNewJoinCollaborativeBoardModal(); // Open the new specific join modal
+        toggleSidebar(true); // Close sidebar after opening the modal
+    });
+
+    // NEW: Functions for the dedicated Join Collaborative Board Modal
+    function openNewJoinCollaborativeBoardModal() {
+        joinCollaborativeBoardIdInput.value = ''; // Clear input field
+        joinCollaborativeBoardModal.style.display = 'flex';
+        body.classList.add('no-scroll');
+        joinCollaborativeBoardIdInput.focus(); // Focus the input for convenience
+        console.log("New Join Collaborative Board modal opened.");
+    }
+
+    function closeNewJoinCollaborativeBoardModal() {
+        joinCollaborativeBoardModal.style.display = 'none';
+        body.classList.remove('no-scroll');
+        console.log("New Join Collaborative Board modal closed.");
+    }
+
+    closeJoinCollaborativeBoardModalBtn.addEventListener('click', closeNewJoinCollaborativeBoardModal);
+
+    joinCollaborativeBoardConfirmBtn.addEventListener('click', async () => {
+        console.log("Join Board button clicked (from new joinCollaborativeBoardModal).");
+        if (!userId) {
+            showCustomModal("User is not logged in. Please wait until the login process is complete.", "Registration pending", 'alert');
+            console.warn("Attempted to join board before user was authenticated.");
+            return;
+        }
+        const inputBoardId = joinCollaborativeBoardIdInput.value.trim();
+        if (!inputBoardId) {
+            showCustomModal("Please enter a board ID.", "Input required", 'alert');
+            return;
+        }
+        const loaded = await loadBoard(inputBoardId, true); // Treat as if from URL for access check
+        if (loaded) {
+            closeNewJoinCollaborativeBoardModal(); // Close the new modal on successful load
+        }
+    });
+
 
     // Function to open and populate the Manage Boards Modal
     function openManageBoardsModal() {
@@ -1009,6 +1071,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateUIForBoardState(false);
             }
         }
+        // NEW: Handle clicking outside the new join collaborative board modal
+        if (event.target === joinCollaborativeBoardModal) {
+            closeNewJoinCollaborativeBoardModal();
+        }
+
         if (!priorityDropdownContainer.contains(event.target)) {
             taskPriorityMenu.style.display = 'none';
         }
