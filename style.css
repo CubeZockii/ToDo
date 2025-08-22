@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --background-color: #1c2025;
     --sidebar-color: #262a2f;
     --card-bg: #2d3238;
@@ -133,6 +133,7 @@ body.no-scroll {
 
 .main-content {
     flex-grow: 1;
+    overflow-x: hidden;
     padding: 2.5rem;
     overflow-y: auto;
 }
@@ -380,6 +381,7 @@ body.no-scroll {
 .kanban-column {
     background-color: var(--sidebar-color);
     padding: 1.5rem;
+    min-width: 0;
     border-radius: 8px;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-light);
@@ -401,13 +403,14 @@ body.no-scroll {
 .kanban-card {
     background-color: var(--card-bg);
     padding: 1rem;
+    padding-bottom: 3.5rem; /* Add padding to accommodate footer */
     border-radius: 6px;
     border-left: 4px solid;
     margin-bottom: 0.75rem;
     cursor: grab;
     transition: all 0.2s ease;
     box-shadow: var(--shadow-light);
-    position: relative;
+    position: relative; /* Make relative for absolute positioning of children */
 }
 
 .kanban-card:hover {
@@ -452,12 +455,40 @@ body.no-scroll {
 .kanban-card p {
     font-size: 0.85rem;
     color: var(--text-muted);
+    white-space: normal;
+    margin-bottom: 1rem; /* Added margin for separation from footer */
+    /* New styles for text wrapping */
+    word-wrap: break-word; /* Allows long words to break and wrap */
+    overflow-wrap: break-word; /* Newer, preferred syntax for word-wrap */
+}
+
+.card-footer {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 5px; /* Adjust padding as needed */
+    border-top: 1px solid rgba(var(--text-color-rgb), 0.1); /* Light separator */
+}
+
+.due-date-display {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.due-date-display .calendar-icon {
+    width: 16px;
+    height: 16px;
+    filter: invert(50%) sepia(20%) saturate(600%) hue-rotate(180deg); /* Adjust icon color */
 }
 
 .kanban-card .card-actions {
-    position: absolute;
-    top: 10px;
-    right: 10px;
     display: flex;
     gap: 5px;
 }

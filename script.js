@@ -1,4 +1,4 @@
-﻿import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
 import {
     getFirestore,
@@ -1244,17 +1244,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 lockIconHtml = `<img src="lock.svg" alt="Locked" class="lock-icon">`;
             }
 
+            // Format due date if it exists
+            let dueDateHtml = '';
+            if (task.dueDate) {
+                const dateParts = task.dueDate.split('-'); // Assuming YYYY-MM-DD format
+                const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0].substring(2,4)}`; // DD/MM/YY
+                dueDateHtml = `<div class="due-date-display"><img src="calendar.svg" alt="Due Date" class="calendar-icon"> ${formattedDate}</div>`;
+            }
+
+
             kanbanCard.innerHTML = `
                 ${lockIconHtml}
                 <h4>${task.name}</h4>
-                <p>${task.description ? task.description.substring(0, 100) : ''}${task.description && task.description.length > 100 ? '...' : ''}</p>
-                <div class="card-actions">
-                    <button class="card-action-btn edit-btn" data-id="${task.id}" ${isTaskLockedByOther ? 'disabled' : ''}>
-                        <img src="edit-3.svg" alt="Edit">
-                    </button>
-                    <button class="card-action-btn delete-btn" data-id="${task.id}" ${isTaskLockedByOther ? 'disabled' : ''}>
-                        <img src="trash-2.svg" alt="Delete">
-                    </button>
+                <p>${task.description || ''}</p> <!-- Display full description without truncation -->
+                <div class="card-footer">
+                    ${dueDateHtml}
+                    <div class="card-actions">
+                        <button class="card-action-btn edit-btn" data-id="${task.id}" ${isTaskLockedByOther ? 'disabled' : ''}>
+                            <img src="edit-3.svg" alt="Edit">
+                        </button>
+                        <button class="card-action-btn delete-btn" data-id="${task.id}" ${isTaskLockedByOther ? 'disabled' : ''}>
+                            <img src="trash-2.svg" alt="Delete">
+                        </button>
+                    </div>
                 </div>
             `;
 
