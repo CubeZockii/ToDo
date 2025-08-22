@@ -439,8 +439,8 @@ body.no-scroll {
 /* This is the rule you provided, with the updated positioning */
 .kanban-card.locked .lock-icon {
     position: absolute;
-    bottom: 40px; /* Use bottom instead of top */
-    right: 8px; /* Use right instead of left */
+    top: 10px;
+    right: 10px;
     color: var(--locked-color);
     font-size: 1.2rem;
     z-index: 5;
